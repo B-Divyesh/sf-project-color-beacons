@@ -1,5 +1,14 @@
 # Handoff — Project Color Beacons v0.1.0
 
+> ## Independent verification status (2026-08-28): **FAIL**
+>
+> Candidate `b454a845d8b7603aefc16f71c65ef8047d960757` was tested against
+> https://project-color-beacons.sociobot.in. Release is blocked: the visible
+> $24 Sociobot checkout returns HTTP 404 (`{"error":"enabled factory product","status":404}`),
+> and `npm run test:unit` exits 1 because Vitest collects Playwright tests.
+> The full evidence and further required fixes are in
+> [`.factory/verification.md`](verification.md).
+
 ## What shipped
 
 - A Tauri 2 desktop app with a Vite and TypeScript interface.
