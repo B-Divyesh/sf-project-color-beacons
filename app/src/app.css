@@ -1,0 +1,72 @@
+@import "../../shared/base.css";
+
+.app-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--seam); }
+.app-header-actions { display: flex; gap: 10px; }
+.app-shell { padding-block: 48px 80px; }
+.app-intro { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: center; }
+.app-intro h1 { font-size: clamp(2.5rem, 5vw, 4rem); }
+.privacy-note { display: flex; gap: 12px; padding: 18px; border-left: 3px solid var(--safe); color: var(--silt); }
+.privacy-note span { color: var(--safe); font-size: 1.5rem; }
+.privacy-note p { margin: 0; }
+.section-heading { margin-top: 64px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.section-heading h2 { margin-bottom: 8px; }
+.section-heading > p { color: var(--silt); }
+
+.project-list { display: grid; gap: 14px; }
+.project-card { padding: 18px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; transition: transform 220ms ease, border-color 220ms ease; }
+.project-card.active { transform: translateY(-4px); border-color: var(--glacial); }
+.project-card h3 { margin: 0 0 2px; }
+.project-path { margin: 0; color: var(--silt); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .9rem; }
+.editor-tags { display: flex; gap: 6px; margin-top: 9px; }
+.editor-tag { font-size: .75rem; border: 1px solid var(--seam); padding: 2px 7px; border-radius: 99px; color: var(--silt); }
+.project-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
+.project-actions button { min-width: 104px; }
+.danger-link { background: transparent; border-color: transparent; color: var(--danger); padding-inline: 10px; min-width: 44px !important; }
+.empty-state { padding: 44px 24px; text-align: center; }
+.empty-state .beacon { margin: 0 auto 20px; opacity: .6; }
+.empty-state p { margin-inline: auto; color: var(--silt); }
+
+.confirmation { margin-top: 48px; padding: 20px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; border: 2px solid var(--warning); background: color-mix(in srgb, var(--porcelain) 88%, #e9b36f); }
+.confirmation h2 { font-size: 1.45rem; margin: 0 0 4px; }
+.confirmation p { margin: 0; color: var(--silt); }
+.confirmation.confirmed { border-color: var(--safe); }
+.confirmation.confirmed h2 { color: var(--safe); }
+.confirmation-placeholder { margin-top: 48px; padding: 18px 20px; border: 1px dashed var(--seam); color: var(--silt); }
+
+dialog { width: min(620px, calc(100% - 28px)); max-height: calc(100vh - 32px); overflow: auto; background: var(--porcelain); color: var(--ink); border: 1px solid var(--seam); border-radius: 18px 18px 28px 18px; box-shadow: 18px 24px 0 rgb(20 40 45 / 18%); padding: 24px; }
+dialog::backdrop { background: rgb(16 35 40 / 64%); backdrop-filter: blur(2px); }
+.dialog-heading { display: flex; justify-content: space-between; gap: 16px; }
+.dialog-heading h2 { font-size: 2rem; }
+.icon-button { width: 44px; padding: 0; font-size: 1.6rem; }
+form > label, legend { display: block; font-weight: 720; margin: 18px 0 7px; }
+input[type="text"], input:not([type]) { width: 100%; min-height: 46px; border: 1px solid var(--seam); border-radius: 10px; background: var(--frost); color: var(--ink); padding: 10px 12px; }
+.folder-field { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.field-help { color: var(--silt); font-size: .88rem; }
+fieldset { border: 0; padding: 0; margin: 18px 0 0; }
+.beacon-options { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.beacon-choice { position: relative; }
+.beacon-choice input { position: absolute; opacity: 0; }
+.beacon-choice label { display: grid; justify-items: center; gap: 6px; cursor: pointer; border: 2px solid transparent; border-radius: 14px; padding: 7px 3px; font-size: .75rem; }
+.beacon-choice input:checked + label { border-color: var(--ink); background: var(--frost); }
+.beacon-choice input:focus-visible + label { outline: 3px solid #d66f35; outline-offset: 2px; }
+.beacon-choice .beacon { width: 42px; height: 42px; flex-basis: 42px; font-size: 1.1rem; }
+.check { display: inline-flex; align-items: center; gap: 8px; margin: 5px 18px 5px 0; min-height: 44px; }
+.check input { width: 20px; height: 20px; }
+.dialog-actions { display: flex; justify-content: end; gap: 10px; margin-top: 24px; }
+.dialog-error { min-height: 24px; color: var(--danger); margin: 12px 0 0; }
+
+@media (max-width: 680px) {
+  .app-header { align-items: flex-start; padding-block: 12px; }
+  .app-header-actions { display: grid; }
+  .app-header-actions button { padding-inline: 12px; }
+  .app-shell { padding-top: 32px; }
+  .app-intro { grid-template-columns: 1fr; gap: 20px; }
+  .project-card { grid-template-columns: auto 1fr; }
+  .project-actions { grid-column: 1 / -1; justify-content: stretch; }
+  .project-actions button { flex: 1; }
+  .confirmation { grid-template-columns: auto 1fr; }
+  .confirmation button { grid-column: 1 / -1; }
+  .beacon-options { grid-template-columns: repeat(3, 1fr); }
+  .folder-field { grid-template-columns: 1fr; }
+  .section-heading { align-items: start; }
+}
