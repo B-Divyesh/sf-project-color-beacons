@@ -93,3 +93,24 @@ test('landing fits a 390 pixel screen and its first action works', async ({ brow
   await expect(page).toHaveURL(/\/demo$/);
   await page.close();
 });
+
+test('desktop interface demo is keyboard-ready and accessible', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1100, height: 800 } });
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('http://127.0.0.1:1420/?demo=1');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await page.locator('.project-card').filter({ hasText: 'Atlas API' }).getByRole('button', { name: 'Check project' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Confirm Atlas API' })).toBeVisible();
+  await page.keyboard.press('Tab');
+  await page.getByRole('button', { name: 'Confirm Atlas API' }).click();
+  await expect(page.getByRole('heading', { name: 'Editor files for Atlas API' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close editor preview' }).click();
+  const results = await new AxeBuilder({ page: page as never }).analyze();
+  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+  expect(errors).toEqual([]);
+  await context.close();
+});

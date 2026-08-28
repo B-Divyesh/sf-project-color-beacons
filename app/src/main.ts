@@ -1,6 +1,7 @@
 import './app.css';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { BEACONS, SAMPLE_PROJECTS, beaconFor, editorPreview, newId, type Project } from '../../shared/beacons';
 
 declare global { interface Window { __TAURI_INTERNALS__?: unknown; } }
@@ -207,6 +208,7 @@ async function submitProject(event: SubmitEvent) {
   const editors = data.getAll('editor').filter((value): value is 'vscode' | 'zed' => value === 'vscode' || value === 'zed');
   const error = required<HTMLElement>('project-error');
   if (!name || !path) { error.textContent = 'The project needs a name and folder. Choose both, then save it.'; return; }
+  if (!editors.length) { error.textContent = 'Choose at least one editor strip, then save the project.'; return; }
   if (projects.some((project) => project.path === path)) { error.textContent = 'That folder already has a beacon. Choose a different folder.'; return; }
   projects.push({ id: newId(), name, path, beaconId, editors, createdAt: Date.now() });
   saveProjects();
@@ -232,6 +234,12 @@ function installDemoBanner() {
 }
 
 document.addEventListener('click', (event) => {
+  const external = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[data-external]');
+  if (external && window.__TAURI_INTERNALS__) {
+    event.preventDefault();
+    void openUrl(external.href);
+    return;
+  }
   const target = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!target) return;
   const action = target.dataset.action;

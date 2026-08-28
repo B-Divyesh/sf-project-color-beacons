@@ -20,7 +20,11 @@ destination="${TMPDIR:-/tmp}/$filename"
 curl -fsSL "$asset_url" -o "$destination"
 curl -fsSL "$checksum_url" -o "$checksums"
 expected="$(grep " $filename\$" "$checksums" | cut -d ' ' -f 1)"
-actual="$(sha256sum "$destination" 2>/dev/null | cut -d ' ' -f 1 || shasum -a 256 "$destination" | cut -d ' ' -f 1)"
+if command -v sha256sum >/dev/null 2>&1; then
+  actual="$(sha256sum "$destination" | cut -d ' ' -f 1)"
+else
+  actual="$(shasum -a 256 "$destination" | cut -d ' ' -f 1)"
+fi
 [ "$expected" = "$actual" ] || { printf '%s\n' 'Checksum failed. The download was not installed.' >&2; exit 1; }
 if [ "$(uname -s)" = "Linux" ]; then
   install_dir="${XDG_BIN_HOME:-$HOME/.local/bin}"

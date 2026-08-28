@@ -7,7 +7,7 @@
 .hero-art figcaption { margin-top: 12px; color: var(--silt); font-size: .84rem; }
 .hero-seal { position: absolute; left: -20px; bottom: 46px; width: 78px; height: 78px; display: grid; place-items: center; border-radius: 50%; background: var(--porcelain); border: 1px solid var(--seam); color: var(--glacial); font: 700 2rem Georgia, serif; box-shadow: 6px 8px 0 rgb(20 40 45 / 16%); }
 
-.preview-section, .steps, .boundaries, .pricing { padding-block: 96px; content-visibility: auto; contain-intrinsic-size: 800px; }
+.preview-section, .steps, .boundaries, .pricing { padding-block: 96px; }
 .section-intro { display: grid; grid-template-columns: .75fr 1fr; gap: 48px; align-items: end; margin-bottom: 38px; }
 .section-intro h2 { max-width: 12ch; margin-bottom: 0; }
 .section-intro p { color: var(--silt); }

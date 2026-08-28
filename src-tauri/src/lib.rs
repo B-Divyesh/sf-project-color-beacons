@@ -99,6 +99,7 @@ fn configure_project(project: Project) -> Result<Vec<String>, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![configure_project])
         .run(tauri::generate_context!())
         .expect("Project Color Beacons could not start");
