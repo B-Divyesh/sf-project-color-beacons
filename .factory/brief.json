@@ -1,0 +1,12 @@
+{
+  "slug": "project-color-beacons",
+  "title": "Project Color Beacons",
+  "summary": "Mark each project with a color, name, and symbol before you edit.",
+  "territory": "utilities",
+  "artifact_class": "desktop-app",
+  "user": "Dyslexic and ADHD developers juggling several similar windows who need an immediate non-text cue for which project they are about to edit.",
+  "smallest_useful_product": "A local desktop helper plus editor configs that assigns a stable high-contrast color/name/icon beacon per project root and shows a confirmation strip before focus-sensitive actions.",
+  "success_measure": "In a multi-project task test, participants reduce wrong-window edits by 50% compared with identical-window baseline.",
+  "monetization": "one-time",
+  "constraints": "Color cannot be the sole cue; include text/icon alternatives and color-blind palettes; project paths remain local; integrations must use supported editor APIs."
+}
