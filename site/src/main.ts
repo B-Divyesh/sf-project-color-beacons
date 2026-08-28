@@ -12,6 +12,14 @@ const titles: Record<string, string> = {
   '/404': 'Page not found — Project Color Beacons'
 };
 
+const descriptions: Record<string, string> = {
+  '/': 'Mark each project with a stable color, name, and symbol. Confirm the project before you edit.',
+  '/demo': 'Try three sample project beacons in a separate browser sandbox.',
+  '/privacy': 'Read how Project Color Beacons keeps project paths and settings on your device.',
+  '/terms': 'Read the purchase and use terms for Project Color Beacons.',
+  '/404': 'The requested Project Color Beacons page was not found.'
+};
+
 function esc(value: string) {
   return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character] ?? character);
 }
@@ -69,6 +77,12 @@ function renderRoute(path = location.pathname) {
   document.title = titles[route];
   const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
   if (canonical) canonical.href = `https://project-color-beacons.sociobot.in${route === '/404' ? path : route}`;
+  const description = descriptions[route];
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', description);
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', titles[route]);
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', description);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', titles[route]);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', description);
   app!.innerHTML = route === '/' ? landing() : route === '/demo' ? demo() : route === '/privacy' ? privacy() : route === '/terms' ? terms() : notFound();
   if (route === '/demo') setupDemo();
   if (route === '/') { setupDownloads(); setupLicense(); }
