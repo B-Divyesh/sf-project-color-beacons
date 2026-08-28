@@ -18,6 +18,7 @@
 - Original generated ceramic artwork and three screenshots of the real demo flow.
 - A tag-triggered GitHub Actions matrix for macOS Intel/Apple silicon, Windows, and Linux packages.
 - Release automation for `SHA256SUMS` and `latest.json`.
+- Published release: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.0`.
 
 ## How to run
 
@@ -44,6 +45,9 @@ Deploy `dist/site`. Its `index.html` is at that root.
 - `cargo check --manifest-path src-tauri/Cargo.toml`: passed with Tauri 2 desktop features.
 - `npx tsc --noEmit`: passed.
 - `npm audit --audit-level=high`: 0 vulnerabilities.
+- GitHub Actions release run `33193181021`: passed on all four build targets.
+- Published Debian package: SHA-256 verified against the released `SHA256SUMS`.
+- Published `latest.json`: valid JSON with 4 macOS, 2 Windows, and 2 Linux download entries.
 - Factory `verify-url.sh`: passed with one title, `lang=en`, one `main`, no missing alt text, no unlabeled buttons, and no console errors.
 - Playwright Axe checks: no serious or critical issues on home, demo, privacy, terms, 404, or desktop demo screens.
 - Mobile check: no horizontal overflow at 390 by 844 pixels.
@@ -73,8 +77,7 @@ Initial site JavaScript is 6.53 KB gzip. Initial CSS is 3.37 KB gzip. The mobile
 
 ## Needs operator action
 
-1. Push the `v0.1.0` tag to run `.github/workflows/release.yml` and confirm all release assets.
-2. Register `project-color-beacons` with the Sociobot billing API at $24 one-time before public checkout.
-3. Add `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID` for macOS signing and notarization.
-4. Add `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD` for Windows Authenticode signing, then connect them to the release job.
-5. Without those secrets, publish the clearly labelled unsigned artifacts already produced by the workflow.
+1. Register `project-color-beacons` with the Sociobot billing API at $24 one-time before public checkout.
+2. Add `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID` for macOS signing and notarization.
+3. Add `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD` for Windows Authenticode signing, then connect them to the release job.
+4. Until those secrets are added, keep the published artifacts clearly labelled as unsigned.
