@@ -1,0 +1,11 @@
+{
+  "name": "Project Color Beacons",
+  "short_name": "Beacons",
+  "start_url": "/demo",
+  "display": "standalone",
+  "background_color": "#f3f7f6",
+  "theme_color": "#176b78",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

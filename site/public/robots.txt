@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://project-color-beacons.sociobot.in/sitemap.xml
