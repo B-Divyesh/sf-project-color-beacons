@@ -1,6 +1,6 @@
 {
   "name": "project-color-beacons",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "test": "playwright test",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:live:billing": "node scripts/verify-live-billing.mjs",
+    "test:live:site": "node scripts/verify-live-site.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

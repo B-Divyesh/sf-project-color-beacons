@@ -30,7 +30,7 @@ function header() {
 }
 
 function footer() {
-  return `<footer class="site-footer shell"><div><strong>Project Color Beacons</strong><p>Mark each project before you edit.</p><p class="footer-meta">Original generated ceramic image · Version 0.1.0 · Build 2026.08.28</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in">Built by Param Factory <span class="sr-only">(external site)</span></a></nav></footer>`;
+  return `<footer class="site-footer shell"><div><strong>Project Color Beacons</strong><p>Mark each project before you edit.</p><p class="footer-meta">Original generated ceramic image · Version 0.1.1 · Build 2026.08.29</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in">Built by Param Factory <span class="sr-only">(external site)</span></a></nav></footer>`;
 }
 
 function landing() {

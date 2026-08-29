@@ -1,6 +1,6 @@
 [package]
 name = "project-color-beacons"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local project identity beacons for developers"
 authors = ["Param Factory"]
 edition = "2021"
