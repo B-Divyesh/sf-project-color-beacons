@@ -114,7 +114,7 @@ function render() {
       return `<article class="project-card ceramic-panel${activeId === project.id ? ' active' : ''}" data-project="${project.id}">
         ${beaconMarkup(project)}
         <div><h3>${escapeHtml(project.name)}</h3><p class="project-path" title="${escapeHtml(project.path)}">${escapeHtml(project.path)}</p><div class="editor-tags" aria-label="Editor integrations">${editorTags || '<span class="editor-tag">Strip only</span>'}</div><span class="sr-only">${beacon.name}, ${beacon.symbolName}</span></div>
-        <div class="project-actions"><button data-action="activate" data-id="${project.id}">Check project</button><button class="danger-link" data-action="remove" data-id="${project.id}" aria-label="Remove ${escapeHtml(project.name)}">Remove</button></div>
+        <div class="project-actions"><button data-action="activate" data-id="${project.id}">Check ${escapeHtml(project.name)}</button><button class="danger-link" data-action="remove" data-id="${project.id}" aria-label="Remove ${escapeHtml(project.name)}">Remove</button></div>
       </article>`;
     }).join('');
   }
@@ -236,7 +236,9 @@ function removeProject(id: string) {
 
 function installDemoBanner() {
   if (!demoMode) return;
-  required<HTMLElement>('demo-banner').innerHTML = `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-action="reset-demo">Reset demo</button><a href="/" data-action="exit-demo">Start for real</a></div>`;
+  const banner = required<HTMLElement>('demo-banner');
+  banner.setAttribute('aria-label', 'Demo status');
+  banner.innerHTML = `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-action="reset-demo">Reset demo</button><a href="/" data-action="exit-demo">Start for real</a></div>`;
 }
 
 document.addEventListener('click', (event) => {

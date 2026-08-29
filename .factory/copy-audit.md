@@ -1,13 +1,13 @@
 # Copy audit
 
-Checked 2026-08-29 after polish round 1. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-29 after polish round 2. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
 | Words | Location | Sentence |
 | ---: | --- | --- |
 | 6 | h1 | Mark the project before you edit. |
-| 12 | hero | For dyslexic and ADHD developers who need distinct cues across similar project windows. |
+| 13 | hero | For dyslexic and ADHD developers who need distinct cues across similar project windows. |
 | 6 | demo note | The demo opens a completed sample. |
 | 3 | demo note | Nothing is saved. |
 | 9 | fact | Project data stays on your device during normal use. |
@@ -27,6 +27,8 @@ Checked 2026-08-29 after polish round 1. Hyphenated terms, paths, prices, and ve
 | 9 | privacy | Project data stays on this device during normal use. |
 | 12 | pricing | Color, name, symbol, and confirmation are free for up to three projects. |
 | 7 | pricing | A valid license removes the project limit. |
+| 7 | download state | Signed downloads are not published yet. |
+| 6 | download state | The free browser demo remains available. |
 | 6 | license restore | Paste it to restore this device. |
 | 6 | footer | Mark each project before you edit. |
 
@@ -36,25 +38,26 @@ Checked 2026-08-29 after polish round 1. Hyphenated terms, paths, prices, and ve
 | ---: | --- | --- |
 | 4 | eyebrow | A local desktop helper |
 | 5 | primary action | Try it with sample data |
-| 3 | action | Download the app |
+| 2 | action | View downloads |
 | 4 | h2 | Preview the confirmation strip |
 | 6 | h2 | Set a beacon in three steps |
 | 3 | step heading | Choose a folder |
-| 3 | step heading | Check the strip |
+| 4 | step heading | Check the confirmation strip |
 | 3 | step heading | Write editor settings |
 | 2 | eyebrow | Privacy boundaries |
 | 5 | h2 | What stays on your device |
 | 2 | eyebrow | Desktop app |
 | 4 | h2 | Start with three projects |
 | 2 | action | Verify license |
+| 4 | unavailable action | Signed Linux download pending |
 
 ## Demo and error copy checked
 
-The demo uses “three beacon cues” for color, name, and symbol. It calls the local path a separate “folder path.” The demo eyebrow is “Separate sample workspace.” Both 404 versions say “Page not found,” “This address does not match a page,” and “Return home.”
+The demo uses “three beacon cues” for color, name, and symbol. It calls the local path a separate “folder path.” Each project control includes its project name. The demo eyebrow is “Separate sample workspace.” Both 404 versions say “Page not found,” “This address does not match a page,” and “Return home.”
 
 ## README check
 
-Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The free-feature sentence exactly matches the registered entitlement claim. Release-manifest, release-matrix, signing-gate, reset, and platform-selection statements each have a tagged claim test.
+Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, signing-gate, reset, and signed-platform-selection statements each have a tagged claim test.
 
 ## Terminology
 
@@ -68,4 +71,4 @@ Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent f
 | An entitlement that passed verification | valid license |
 | Configuration written into an editor folder | editor settings |
 
-Catalog description: “Mark each project with a color, name, and symbol before you edit.” (12 words, 65 characters without the newline.)
+Catalog description: “Mark the right project with a color, name, and symbol before you edit.” (13 words, 70 characters without the newline.)

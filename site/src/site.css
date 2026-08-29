@@ -76,6 +76,7 @@
 .config-output pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--ink); color: var(--porcelain); padding: 16px; border-radius: 12px; max-height: 330px; overflow: auto; }
 
 .download-state { color: var(--silt); font-size: .9rem; }
+#download-button[aria-disabled="true"] { cursor: wait; opacity: .72; transform: none; box-shadow: none; }
 
 @media (max-width: 800px) {
   .hero { grid-template-columns: 1fr; min-height: auto; padding-block: 48px 72px; }

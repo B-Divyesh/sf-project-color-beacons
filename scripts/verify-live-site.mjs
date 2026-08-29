@@ -35,7 +35,7 @@ try {
     assert.equal(await page.getByRole('navigation', { name: 'Main navigation' }).count(), 1);
     assert.equal(await page.getByRole('navigation', { name: 'Footer navigation' }).count(), 1);
     const axe = await new AxeBuilder({ page }).analyze();
-    assert.deepEqual(axe.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')), []);
+    assert.deepEqual(axe.violations, []);
     const unexpectedErrors = path === '/missing-live-check'
       ? errors.filter((message) => !/Failed to load resource: the server responded with a status of 404/.test(message))
       : errors;
@@ -53,7 +53,7 @@ try {
   assert.match(await mobile.locator('#config-output').innerText(), /Editor files ready for Atlas API/);
   const atlasBox = await mobile.locator('.demo-project').filter({ hasText: 'Atlas API' }).boundingBox();
   assert.ok(atlasBox && atlasBox.y + atlasBox.height <= 844, 'A complete Atlas API row must fit in the initial mobile viewport');
-  await mobile.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await mobile.getByRole('button', { name: 'Check Northwind Store' }).click();
   assert.match(await mobile.locator('#demo-confirmation').innerText(), /Check before editing · Northwind Store/);
   assert.ok((await mobile.evaluate(() => localStorage.getItem('demo:pcb:site-state'))) !== null);
   assert.deepEqual([...new Set(demoRequests.map((url) => new URL(url).origin))], [origin]);
@@ -96,13 +96,32 @@ try {
   assert.ok(Number.parseFloat(durations.transition) <= 0.00001);
   await reducedContext.close();
 
+  const historyContext = await browser.newContext({ viewport: { width: 390, height: 600 } });
+  const historyPage = await historyContext.newPage();
+  await historyPage.goto(`${origin}/`);
+  await historyPage.evaluate(() => window.scrollTo(0, 1800));
+  await historyPage.waitForFunction(() => window.scrollY > 1700);
+  const landingScroll = await historyPage.evaluate(() => window.scrollY);
+  await historyPage.evaluate(() => document.querySelector('a[href="/demo"]')?.click());
+  await historyPage.waitForURL(`${origin}/demo`);
+  await historyPage.evaluate(() => window.scrollTo(0, 300));
+  await historyPage.waitForFunction(() => window.scrollY > 250);
+  const demoScroll = await historyPage.evaluate(() => window.scrollY);
+  await historyPage.goBack();
+  await historyPage.waitForFunction((expected) => window.scrollY >= expected - 2, landingScroll);
+  assert.equal(await historyPage.locator('h1').evaluate((element) => element === document.activeElement), true);
+  await historyPage.goForward();
+  await historyPage.waitForFunction((expected) => window.scrollY >= expected - 2, demoScroll);
+  assert.equal(await historyPage.locator('h1').evaluate((element) => element === document.activeElement), true);
+  await historyContext.close();
+
   const billingContext = await browser.newContext();
   const billing = await billingContext.newPage();
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
-  const download = billing.getByRole('link', { name: 'Download for Linux' });
-  await download.waitFor();
-  assert.match(await download.getAttribute('href') ?? '', /\/releases\/download\/v0\.1\.1\/.*\.(AppImage|deb)$/);
-  assert.match(await billing.locator('#download-state').innerText(), /^v0\.1\.1 · /);
+  const download = billing.locator('#download-button');
+  await download.getByText('Signed Linux download pending').waitFor();
+  assert.equal(await download.getAttribute('href'), null);
+  assert.equal(await download.getAttribute('aria-disabled'), 'true');
   const checkout = billing.getByRole('link', { name: 'Buy a $24 license' });
   await checkout.waitFor();
   assert.equal(await checkout.getAttribute('href'), 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout');
@@ -118,7 +137,7 @@ try {
   assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, privacy, demo disposal, offline update, v0.1.1 download, billing UI, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, signed-release gate, billing UI, and license return.');
 } finally {
   await browser.close();
 }

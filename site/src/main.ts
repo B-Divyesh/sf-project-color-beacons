@@ -36,17 +36,17 @@ function footer() {
 function landing() {
   return `${header()}<main id="main" tabindex="-1">
     <section class="hero shell">
-      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">Download the app</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>The free app stores three projects.</li></ul></div>
+      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">View downloads</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>The free app stores three projects.</li></ul></div>
       <figure class="hero-art"><picture><source media="(max-width: 700px)" srcset="/assets/ceramic-beacons-mobile.webp"><img src="/assets/ceramic-beacons.webp" width="1180" height="787" fetchpriority="high" decoding="async" alt="Six distinct ceramic symbols sit beside layered window-like panes."></picture><span class="hero-seal" aria-hidden="true">◒</span><figcaption>Each project repeats one symbol, color, and name.</figcaption></figure>
     </section>
     <section class="preview-section shell" aria-labelledby="preview-title"><div class="section-intro"><h2 id="preview-title">Preview the confirmation strip</h2><p>The strip repeats the three beacon cues. You press the named button before editor settings change.</p></div>${productPreview()}</section>
     <section class="steps shell" aria-labelledby="steps-title"><div class="section-intro"><h2 id="steps-title">Set a beacon in three steps</h2><p>The app writes supported settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.</p></div><div class="steps-grid">
       <figure class="step"><img src="/assets/walkthrough-1.webp" width="800" height="600" loading="lazy" decoding="async" alt="Project list with three sample projects and distinct beacons."><figcaption><span class="step-number">Step 1</span><strong>Choose a folder</strong>Name the project and pick its symbol and color.</figcaption></figure>
-      <figure class="step"><img src="/assets/walkthrough-2.webp" width="800" height="600" loading="lazy" decoding="async" alt="Confirmation strip for Atlas API above the project list."><figcaption><span class="step-number">Step 2</span><strong>Check the strip</strong>Check the three beacon cues and the folder path.</figcaption></figure>
+      <figure class="step"><img src="/assets/walkthrough-2.webp" width="800" height="600" loading="lazy" decoding="async" alt="Confirmation strip for Atlas API above the project list."><figcaption><span class="step-number">Step 2</span><strong>Check the confirmation strip</strong>Check the three beacon cues and the folder path.</figcaption></figure>
       <figure class="step"><img src="/assets/walkthrough-3.webp" width="800" height="600" loading="lazy" decoding="async" alt="Editor settings preview after Atlas API is confirmed."><figcaption><span class="step-number">Step 3</span><strong>Write editor settings</strong>The app merges the beacon into supported project files.</figcaption></figure>
     </div></section>
     <section class="boundaries" aria-labelledby="privacy-title"><div class="shell"><div><p class="eyebrow">Privacy boundaries</p><h2 id="privacy-title">What stays on your device</h2></div><ul class="boundary-list"><li><strong>Repeat the cues.</strong> Every beacon includes a written name, symbol, and color.</li><li><strong>Confirm the project.</strong> Editor settings wait for the named confirmation.</li><li><strong>Keep data local.</strong> Project data stays on this device during normal use.</li></ul></div></section>
-    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" href="https://github.com/B-Divyesh/sf-project-color-beacons/releases">View downloads</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for the latest desktop build…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
+    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" aria-disabled="true">Checking signed downloads…</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for a signed desktop build…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
       <form class="license-restore" id="license-restore"><label for="site-license">Have a license? Paste it to restore this device.</label><input id="site-license" name="license" autocomplete="off" spellcheck="false"><button type="submit" aria-label="Verify license">Verify license</button><p id="license-status" class="status-message" role="status"></p></form>
     </section>
   </main>${footer()}`;
@@ -57,7 +57,7 @@ function productPreview() {
 }
 
 function demo() {
-  return `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-demo-action="reset">Reset demo</button><a href="/#download" data-demo-action="exit">Start for real</a></div>${header()}<main id="main" class="demo-main shell" tabindex="-1"><div class="demo-intro"><div><p class="eyebrow">Separate sample workspace</p><h1>Check a project before you edit.</h1><p class="lede">Review the completed Atlas API example, then try another sample.</p></div><p class="action-note">Demo changes use the <code>demo:</code> storage space only.</p></div><section class="demo-app ceramic-panel" aria-labelledby="sample-projects-title"><h2 id="sample-projects-title">Completed sample and projects</h2><div id="demo-confirmation" class="demo-confirmation"></div><div id="config-output"></div><div id="demo-project-list" class="demo-project-list"></div><p class="demo-status" id="demo-status" role="status"></p></section></main>${footer()}`;
+  return `<aside class="demo-banner" aria-label="Demo status"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-demo-action="reset">Reset demo</button><a href="/#download" data-demo-action="exit">Start for real</a></aside>${header()}<main id="main" class="demo-main shell" tabindex="-1"><div class="demo-intro"><div><p class="eyebrow">Separate sample workspace</p><h1>Check a project before you edit.</h1><p class="lede">Review the completed Atlas API example, then try another sample.</p></div><p class="action-note">Demo changes use the <code>demo:</code> storage space only.</p></div><section class="demo-app ceramic-panel" aria-labelledby="sample-projects-title"><h2 id="sample-projects-title">Completed sample and projects</h2><div id="demo-confirmation" class="demo-confirmation"></div><div id="config-output"></div><div id="demo-project-list" class="demo-project-list"></div><p class="demo-status" id="demo-status" role="status"></p></section></main>${footer()}`;
 }
 
 function privacy() {
@@ -65,14 +65,16 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license supports unlimited projects on your devices.</p><h2>Purchases</h2><p>The site shows a purchase link only when the Sociobot product catalogue lists an active checkout.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when the Sociobot product catalogue lists an active checkout.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
   return `${header()}<main id="main" class="not-found shell" tabindex="-1"><p class="eyebrow">Page not found</p><h1>This address does not match a page.</h1><p>Check the address or return home.</p><a class="button" href="/" data-link>Return home</a></main>${footer()}`;
 }
 
-function renderRoute(path = location.pathname, focusHeading = false) {
+type RouteHistoryState = { scrollY?: number };
+
+function renderRoute(path = location.pathname, focusHeading = false, restoreScroll = 0) {
   const demoQuery = path === '/' && new URLSearchParams(location.search).get('demo') === '1';
   const known = Object.prototype.hasOwnProperty.call(titles, path);
   const route = demoQuery ? '/demo' : known ? path : '/404';
@@ -93,12 +95,18 @@ function renderRoute(path = location.pathname, focusHeading = false) {
   if (focusHeading) heading?.focus({ preventScroll: true });
   const announcer = document.getElementById('route-status');
   if (announcer) announcer.textContent = heading?.textContent ?? '';
-  scrollTo({ top: 0, behavior: 'auto' });
+  requestAnimationFrame(() => scrollTo({ top: restoreScroll, behavior: 'auto' }));
 }
 
 function navigate(path: string) {
-  history.pushState({}, '', path);
-  renderRoute(location.pathname, true);
+  saveScrollPosition();
+  history.pushState({ scrollY: 0 } satisfies RouteHistoryState, '', path);
+  renderRoute(location.pathname, true, 0);
+}
+
+function saveScrollPosition() {
+  const state = (history.state ?? {}) as RouteHistoryState;
+  history.replaceState({ ...state, scrollY: window.scrollY } satisfies RouteHistoryState, '', location.href);
 }
 
 document.addEventListener('click', (event) => {
@@ -107,7 +115,17 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   navigate(link.pathname);
 });
-window.addEventListener('popstate', () => renderRoute(location.pathname, true));
+history.scrollRestoration = 'manual';
+if (!history.state) history.replaceState({ scrollY: window.scrollY } satisfies RouteHistoryState, '', location.href);
+let scrollFrame = 0;
+window.addEventListener('scroll', () => {
+  cancelAnimationFrame(scrollFrame);
+  scrollFrame = requestAnimationFrame(saveScrollPosition);
+}, { passive: true });
+window.addEventListener('popstate', (event) => {
+  const state = (event.state ?? {}) as RouteHistoryState;
+  renderRoute(location.pathname, true, state.scrollY ?? 0);
+});
 
 type DemoState = { seedVersion: 2; projects: Project[]; activeId: string | null; confirmedId: string | null };
 const demoKey = 'demo:pcb:site-state';
@@ -132,7 +150,7 @@ function renderDemoState() {
   const strip = document.getElementById('demo-confirmation');
   const output = document.getElementById('config-output');
   if (!list || !strip || !output) return;
-  list.innerHTML = demoState.projects.map((project) => { const beacon = beaconFor(project.beaconId); return `<article class="demo-project"><span class="beacon" style="--beacon-color:${beacon.color}" aria-label="${beacon.name}, ${beacon.symbolName}">${beacon.symbol}</span><div><strong>${esc(project.name)}</strong><p title="${esc(project.path)}">${esc(project.path)}</p></div><button type="button" data-demo-action="check" data-id="${project.id}">Check project</button></article>`; }).join('');
+  list.innerHTML = demoState.projects.map((project) => { const beacon = beaconFor(project.beaconId); return `<article class="demo-project"><span class="beacon" style="--beacon-color:${beacon.color}" aria-label="${beacon.name}, ${beacon.symbolName}">${beacon.symbol}</span><div><strong>${esc(project.name)}</strong><p title="${esc(project.path)}">${esc(project.path)}</p></div><button type="button" data-demo-action="check" data-id="${project.id}">Check ${esc(project.name)}</button></article>`; }).join('');
   const project = demoState.projects.find((item) => item.id === demoState.activeId);
   if (!project) {
     strip.className = 'demo-confirmation';
@@ -203,17 +221,17 @@ async function setupDownloads() {
   const button = document.getElementById('download-button') as HTMLAnchorElement | null;
   const state = document.getElementById('download-state');
   if (!button || !state) return;
-  const fallback = 'https://github.com/B-Divyesh/sf-project-color-beacons/releases';
   const platform = /Windows/i.test(navigator.userAgent) ? 'windows' : /Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'macOS' : 'linux';
-  button.textContent = `View ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'} downloads`;
+  const platformLabel = platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux';
+  button.textContent = `Checking ${platformLabel} downloads…`;
   try {
     const cache = JSON.parse(localStorage.getItem('pcb:release-cache') ?? '{}') as { at?: number; data?: Release };
-    let release = cache.data;
+    let release = isSignedRelease(cache.data) ? cache.data : undefined;
     if (!release || !cache.at || Date.now() - cache.at > 3_600_000) {
-      const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=1', { headers: { Accept: 'application/vnd.github+json' } });
+      const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', { headers: { Accept: 'application/vnd.github+json' } });
       if (!response.ok) throw new Error('Release not available');
       const releases = await response.json() as Release[];
-      release = releases[0];
+      release = releases.find(isSignedRelease);
       if (!release) throw new Error('Release not available');
       localStorage.setItem('pcb:release-cache', JSON.stringify({ at: Date.now(), data: release }));
     }
@@ -221,11 +239,14 @@ async function setupDownloads() {
     const asset = release.assets.find((item) => pattern.test(item.name));
     if (!asset) throw new Error('Platform asset not available');
     button.href = asset.browser_download_url;
+    button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    state.textContent = `${release.tag_name} · ${asset.name} · unsigned build`;
+    state.textContent = `${release.tag_name} · ${asset.name} · signed build`;
   } catch {
-    button.href = fallback;
-    state.textContent = 'Downloads are being published. The Releases page will show them when ready.';
+    button.removeAttribute('href');
+    button.setAttribute('aria-disabled', 'true');
+    button.textContent = `Signed ${platformLabel} download pending`;
+    state.textContent = 'Signed downloads are not published yet. The free browser demo remains available.';
   }
 }
 
@@ -241,7 +262,11 @@ async function setupPurchaseOffer() {
   }
 }
 
-type Release = { tag_name: string; assets: Array<{ name: string; browser_download_url: string }> };
+type Release = { tag_name: string; body?: string; draft?: boolean; prerelease?: boolean; assets: Array<{ name: string; browser_download_url: string }> };
+
+function isSignedRelease(release?: Release): release is Release {
+  return Boolean(release && !release.draft && !release.prerelease && /Signed and notarized desktop builds\./i.test(release.body ?? ''));
+}
 
 function setupLicense() {
   const url = new URL(location.href);
@@ -249,7 +274,7 @@ function setupLicense() {
   if (returned) {
     localStorage.setItem('sb_license:project-color-beacons', returned);
     url.searchParams.delete('license');
-    history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
     void verifySiteLicense(returned);
   }
   document.getElementById('license-restore')?.addEventListener('submit', (event) => {

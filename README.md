@@ -2,7 +2,7 @@
 
 Mark each project with a color, name, and symbol before you edit.
 
-Project Color Beacons is a local desktop helper for developers who juggle similar windows. It gives each project folder a stable beacon and a named confirmation strip. The app writes supported per-project settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.
+Project Color Beacons is a local desktop helper for developers who juggle similar windows. It keeps each saved project's color, name, and symbol after a restart. The app writes supported per-project settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.
 
 ## Try sample projects
 
@@ -47,9 +47,9 @@ The release workflow targets these packages when a `v*` tag is pushed. Publicati
 - Windows: MSI or executable installer
 - Linux: AppImage and Debian package
 
-The workflow publishes `SHA256SUMS` and `latest.json`. The landing page detects the operating system and resolves a matching asset through the GitHub API. Until the first release is published, it links to the Releases page.
+The workflow publishes `SHA256SUMS` and `latest.json`. The landing page detects the operating system and resolves a matching signed asset through the GitHub API. It keeps the download unavailable when no signed release exists.
 
-The release workflow signs Windows packages and signs and notarizes macOS packages before it publishes them.
+The site offers a package only when its release is marked as signed and notarized. Unsigned releases stay unavailable from the product page.
 
 ## Price and privacy
 

@@ -29,7 +29,7 @@ test('@claim:three-cues every sample project has a color, name, and symbol', asy
     const project = page.locator('.demo-project').filter({ hasText: sample.name });
     await expect(project.getByText(sample.name, { exact: true })).toBeVisible();
     await expect(project.getByLabel(`${sample.beacon}, ${sample.symbol}`)).toBeVisible();
-    await project.getByRole('button', { name: 'Check project' }).click();
+    await project.getByRole('button', { name: `Check ${sample.name}` }).click();
 
     const strip = page.locator('#demo-confirmation');
     await expect(strip).toContainText(sample.name);
@@ -40,7 +40,7 @@ test('@claim:three-cues every sample project has a color, name, and symbol', asy
 
 test('@claim:confirmation-before-write editor output appears only after confirmation', async ({ page }) => {
   await page.goto('/demo');
-  await page.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await page.getByRole('button', { name: 'Check Northwind Store' }).click();
   await expect(page.locator('#config-output')).toBeEmpty();
   await page.getByRole('button', { name: 'Confirm Northwind Store' }).click();
   await expect(page.getByRole('heading', { name: 'Editor files ready for Northwind Store' })).toBeVisible();
@@ -55,7 +55,7 @@ test('@claim:demo-isolated demo uses no real project storage or outside requests
     if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') outsideRequests.push(request.url());
   });
   await page.goto('/demo');
-  await page.getByRole('button', { name: 'Check project' }).first().click();
+  await page.getByRole('button', { name: 'Check Atlas API' }).click();
   const keys = await page.evaluate(() => Object.keys(localStorage));
   expect(keys.some((key) => key.startsWith('demo:'))).toBe(true);
   expect(keys).not.toContain('pcb:projects');
@@ -68,7 +68,7 @@ test('@claim:demo-isolated demo uses no real project storage or outside requests
   await expect(desktop.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   await expect(desktop.locator('#confirmation-area')).toContainText('Confirmed');
   await expect(desktop.locator('#confirmation-area')).toContainText('Atlas API');
-  await desktop.locator('.project-card').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await desktop.getByRole('button', { name: 'Check Northwind Store' }).click();
   await desktop.getByRole('button', { name: 'Reset demo' }).click();
   await expect(desktop.locator('#confirmation-area')).toContainText('Atlas API');
   expect(await desktop.evaluate(() => localStorage.getItem('pcb:projects'))).toBe('real-project-sentinel');
@@ -80,7 +80,7 @@ test('@claim:demo-disposal Start for real discards both sample workspaces', asyn
   const siteContext = await browser.newContext();
   const site = await siteContext.newPage();
   await site.goto('http://127.0.0.1:4173/demo');
-  await site.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await site.getByRole('button', { name: 'Check Northwind Store' }).click();
   await expect(site.locator('#demo-confirmation')).toContainText('Check before editing · Northwind Store');
   await expect.poll(() => site.evaluate(() => localStorage.getItem('demo:pcb:site-state'))).not.toBeNull();
   await site.getByRole('link', { name: 'Start for real' }).click();
@@ -94,7 +94,7 @@ test('@claim:demo-disposal Start for real discards both sample workspaces', asyn
   const desktopContext = await browser.newContext();
   const desktop = await desktopContext.newPage();
   await desktop.goto('http://127.0.0.1:1420/?demo=1');
-  await desktop.locator('.project-card').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await desktop.getByRole('button', { name: 'Check Northwind Store' }).click();
   await expect(desktop.getByRole('button', { name: 'Confirm Northwind Store' })).toBeVisible();
   expect(await desktop.evaluate(() => localStorage.getItem('demo:pcb:projects'))).not.toBeNull();
   await desktop.getByRole('link', { name: 'Start for real' }).click();
@@ -116,7 +116,7 @@ test('@claim:offline-reload demo reloads offline after its first visit', async (
 
 test('@claim:demo-reset Reset demo restores the completed sample workspace', async ({ page }) => {
   await page.goto('/demo');
-  await page.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await page.getByRole('button', { name: 'Check Northwind Store' }).click();
   await page.getByRole('button', { name: 'Confirm Northwind Store' }).click();
   await expect(page.getByRole('heading', { name: 'Editor files ready for Northwind Store' })).toBeVisible();
   await page.getByRole('button', { name: 'Reset demo' }).click();
@@ -141,7 +141,7 @@ test('@claim:free-project-limit fourth project opens the license choice', async 
   const freeProject = page.locator('.project-card').filter({ hasText: 'One' });
   await expect(freeProject.getByRole('heading', { name: 'One' })).toBeVisible();
   await expect(freeProject.getByLabel('Fjord beacon, half moon symbol')).toBeVisible();
-  await freeProject.getByRole('button', { name: 'Check project' }).click();
+  await freeProject.getByRole('button', { name: 'Check One' }).click();
   await expect(page.locator('#confirmation-area')).toContainText('One · ◒ Fjord');
   await page.getByRole('button', { name: 'Confirm One' }).click();
   await expect(page.getByRole('heading', { name: 'Editor files for One' })).toBeVisible();
@@ -154,6 +154,30 @@ test('@claim:free-project-limit fourth project opens the license choice', async 
   await expect(page.getByText('License active. You can add unlimited projects.')).toBeVisible();
   await page.getByRole('button', { name: 'Add project' }).click();
   await expect(page.getByRole('heading', { name: 'Add a project' })).toBeVisible();
+  await context.close();
+});
+
+test('@claim:beacon-stability saved cues remain unchanged when the app reopens', async ({ browser }) => {
+  const context = await browser.newContext();
+  let page = await context.newPage();
+  await page.goto('http://127.0.0.1:1420/?demo=1');
+  await page.getByRole('button', { name: 'Add project' }).click();
+  await page.getByRole('button', { name: 'Save project beacon' }).click();
+  let project = page.locator('.project-card').filter({ hasText: 'Payments Worker' });
+  await expect(project.getByRole('heading', { name: 'Payments Worker' })).toBeVisible();
+  await expect(project.getByLabel('Saffron beacon, three waves symbol')).toBeVisible();
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('demo:pcb:projects') ?? '[]')
+    .find((item: { name: string }) => item.name === 'Payments Worker'));
+  await page.close();
+
+  page = await context.newPage();
+  await page.goto('http://127.0.0.1:1420/?demo=1');
+  project = page.locator('.project-card').filter({ hasText: 'Payments Worker' });
+  await expect(project.getByRole('heading', { name: 'Payments Worker' })).toBeVisible();
+  await expect(project.getByLabel('Saffron beacon, three waves symbol')).toBeVisible();
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('demo:pcb:projects') ?? '[]')
+    .find((item: { name: string }) => item.name === 'Payments Worker'));
+  expect(after).toEqual(before);
   await context.close();
 });
 
@@ -203,19 +227,19 @@ test('@claim:release-matrix release workflow targets macOS, Windows, and Linux p
   expect(workflow).toContain('tauri-apps/tauri-action@v0');
 });
 
-test('@claim:platform-download resolves matching assets for macOS, Windows, and Linux', async ({ browser }) => {
+test('@claim:platform-download resolves only signed matching assets for macOS, Windows, and Linux', async ({ browser }) => {
   const fixtures = [
     { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS', asset: 'Project.Color.Beacons_0.1.2_x64.dmg' },
     { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows', asset: 'Project.Color.Beacons_0.1.2_x64_en-US.msi' },
     { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', label: 'Linux', asset: 'Project.Color.Beacons_0.1.2_amd64.AppImage' }
   ];
-  const release = { tag_name: 'v0.1.2', assets: fixtures.map(({ asset }) => ({ name: asset, browser_download_url: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/download/v0.1.2/${asset}` })) };
+  const release = { tag_name: 'v0.1.2', body: 'Signed and notarized desktop builds. Check SHA256SUMS before installing.', draft: false, prerelease: false, assets: fixtures.map(({ asset }) => ({ name: asset, browser_download_url: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/download/v0.1.2/${asset}` })) };
 
   for (const fixture of fixtures) {
     const context = await browser.newContext({ userAgent: fixture.userAgent });
     const page = await context.newPage();
     await serveLocalCandidateAtProductionOrigin(page);
-    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=1', (route) => route.fulfill({ json: [release] }));
+    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [release] }));
     await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
     await page.goto(`${productionOrigin}/`);
     const download = page.getByRole('link', { name: `Download for ${fixture.label}` });
@@ -226,11 +250,14 @@ test('@claim:platform-download resolves matching assets for macOS, Windows, and 
   const fallbackContext = await browser.newContext({ userAgent: fixtures[2].userAgent });
   const fallbackPage = await fallbackContext.newPage();
   await serveLocalCandidateAtProductionOrigin(fallbackPage);
-  await fallbackPage.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=1', (route) => route.fulfill({ status: 503 }));
+  await fallbackPage.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [{ ...release, body: 'Unsigned desktop builds.' }] }));
   await fallbackPage.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
   await fallbackPage.goto(`${productionOrigin}/`);
-  await expect(fallbackPage.getByRole('link', { name: 'View Linux downloads' })).toHaveAttribute('href', 'https://github.com/B-Divyesh/sf-project-color-beacons/releases');
-  await expect(fallbackPage.getByText('Downloads are being published. The Releases page will show them when ready.')).toBeVisible();
+  const pending = fallbackPage.locator('#download-button');
+  await expect(pending).toHaveText('Signed Linux download pending');
+  await expect(pending).not.toHaveAttribute('href', /.+/);
+  await expect(pending).toHaveAttribute('aria-disabled', 'true');
+  await expect(fallbackPage.getByText('Signed downloads are not published yet. The free browser demo remains available.')).toBeVisible();
   await fallbackContext.close();
 });
 
@@ -252,7 +279,7 @@ test('@claim:project-data-local normal desktop use sends no project data to anot
     if (new URL(request.url()).origin !== 'http://127.0.0.1:1420') outsideRequests.push(request.url());
   });
   await page.goto('http://127.0.0.1:1420/?demo=1');
-  await page.locator('.project-card').filter({ hasText: 'Atlas API' }).getByRole('button', { name: 'Check project' }).click();
+  await page.getByRole('button', { name: 'Check Atlas API' }).click();
   await page.getByRole('button', { name: 'Confirm Atlas API' }).click();
   await expect(page.getByRole('heading', { name: 'Editor files for Atlas API' })).toBeVisible();
   expect(outsideRequests).toEqual([]);
@@ -323,7 +350,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   await appContext.close();
 });
 
-test('routes have accessible structure, complete metadata, and no serious Axe findings', async ({ page }) => {
+test('routes have accessible structure, complete metadata, and no Axe findings', async ({ page }) => {
   for (const path of ['/', '/demo', '/?demo=1', '/privacy', '/terms', '/missing-page', '/404.html']) {
     const errors: string[] = [];
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -339,7 +366,7 @@ test('routes have accessible structure, complete metadata, and no serious Axe fi
     await expect(page.getByRole('navigation', { name: 'Main navigation' })).toHaveCount(1);
     await expect(page.getByRole('navigation', { name: 'Footer navigation' })).toHaveCount(1);
     const results = await new AxeBuilder({ page: page as never }).analyze();
-    expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+    expect(results.violations).toEqual([]);
     expect(errors).toEqual([]);
   }
 });
@@ -371,14 +398,34 @@ test('one-click mobile demo opens with a completed result and full sample row', 
   await page.close();
 });
 
-test('SPA navigation restores route focus and supports the back button', async ({ page }) => {
+test('SPA Back and Forward restore focus and each history entry scroll position', async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 600 } });
   await page.goto('/');
-  await page.getByRole('link', { name: 'Demo', exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 1800));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1700);
+  const landingScroll = await page.evaluate(() => window.scrollY);
+  await page.evaluate(() => (document.querySelector<HTMLAnchorElement>('a[href="/demo"]') as HTMLAnchorElement).click());
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.locator('h1')).toBeFocused();
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(250);
+  const demoScroll = await page.evaluate(() => window.scrollY);
   await page.goBack();
   await expect(page).toHaveURL('http://127.0.0.1:4173/');
   await expect(page.locator('h1')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(landingScroll - 2);
+  await page.goForward();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.locator('h1')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(demoScroll - 2);
+  await page.close();
+});
+
+test('demo project controls have unique accessible names', async ({ page }) => {
+  await page.goto('/demo');
+  await expect(page.getByRole('button', { name: 'Check Atlas API' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Check Northwind Store' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Check Launch Docs' })).toHaveCount(1);
 });
 
 test('desktop interface fits its 390 pixel minimum window', async ({ browser }) => {
@@ -398,7 +445,7 @@ test('desktop interface demo is keyboard-ready and accessible', async ({ browser
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto('http://127.0.0.1:1420/?demo=1');
   await expect(page.locator('h1')).toHaveCount(1);
-  await page.locator('.project-card').filter({ hasText: 'Atlas API' }).getByRole('button', { name: 'Check project' }).focus();
+  await page.getByRole('button', { name: 'Check Atlas API' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Confirm Atlas API' })).toBeVisible();
   await page.keyboard.press('Tab');
@@ -406,7 +453,7 @@ test('desktop interface demo is keyboard-ready and accessible', async ({ browser
   await expect(page.getByRole('heading', { name: 'Editor files for Atlas API' })).toBeVisible();
   await page.getByRole('button', { name: 'Close editor preview' }).click();
   const results = await new AxeBuilder({ page: page as never }).analyze();
-  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+  expect(results.violations).toEqual([]);
   expect(errors).toEqual([]);
   await context.close();
 });

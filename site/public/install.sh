@@ -12,6 +12,10 @@ release_json="$(mktemp)"
 checksums="$(mktemp)"
 trap 'rm -f "$release_json" "$checksums"' EXIT
 curl -fsSL "https://api.github.com/repos/$repo/releases/latest" -o "$release_json"
+grep -q '"body": "Signed and notarized desktop builds\.' "$release_json" || {
+  printf '%s\n' 'A signed and notarized release is not published yet.' >&2
+  exit 1
+}
 asset_url="$(sed -n 's/.*"browser_download_url": "\([^"]*\)".*/\1/p' "$release_json" | grep "$pattern" | head -n 1)"
 checksum_url="$(sed -n 's/.*"browser_download_url": "\([^"]*SHA256SUMS\)".*/\1/p' "$release_json" | head -n 1)"
 [ -n "$asset_url" ] && [ -n "$checksum_url" ] || { printf '%s\n' 'A matching release is not published yet.' >&2; exit 1; }

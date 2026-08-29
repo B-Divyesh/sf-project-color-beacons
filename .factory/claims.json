@@ -49,6 +49,13 @@
     "sandbox": "browser version of the app preloaded with three local projects; exercise all four free capabilities, try a fourth project, then verify a fixture license"
   },
   {
+    "id": "beacon-stability",
+    "claim": "A saved project's color, name, and symbol remain unchanged when the app reopens.",
+    "where": "site metadata, README, product behavior",
+    "test": "npm test -- --grep @claim:beacon-stability",
+    "sandbox": "fresh desktop-demo browser context; save Payments Worker, close its page, reopen the app with the same local storage, and compare all three cues"
+  },
+  {
     "id": "release-manifest",
     "claim": "The release workflow generates SHA256SUMS and latest.json for its desktop packages.",
     "where": "README",
@@ -71,10 +78,10 @@
   },
   {
     "id": "platform-download",
-    "claim": "The landing page selects a matching macOS, Windows, or Linux release asset.",
+    "claim": "The landing page selects a matching macOS, Windows, or Linux asset only from a signed release.",
     "where": "landing download section, README",
     "test": "npm test -- --grep @claim:platform-download",
-    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and one recorded GitHub release response"
+    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and signed and unsigned recorded GitHub release responses"
   },
   {
     "id": "settings-preserved",

@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 $repo = "B-Divyesh/sf-project-color-beacons"
 $release = Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest"
+if ($release.body -notmatch '^Signed and notarized desktop builds\.') { throw "A signed and notarized release is not published yet." }
 $asset = $release.assets | Where-Object { $_.name -match '\.(msi|exe)$' } | Select-Object -First 1
 $sums = $release.assets | Where-Object { $_.name -eq 'SHA256SUMS' } | Select-Object -First 1
 if (-not $asset -or -not $sums) { throw "A Windows release is not published yet." }
