@@ -1,0 +1,95 @@
+{
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "Project Color Beacons — Mark the right project",
+      "screenshot": "evidence/polish-3/live-landing-mobile-first-screen.png"
+    },
+    {
+      "path": "/?demo=1",
+      "status": 200,
+      "title": "Demo — Project Color Beacons",
+      "screenshot": "evidence/polish-3/live-demo-query-mobile.png"
+    },
+    {
+      "path": "/missing-live-screenshot",
+      "status": 404,
+      "title": "Page not found — Project Color Beacons",
+      "screenshot": "evidence/polish-3/live-404-desktop.png"
+    },
+    {
+      "path": "/#download",
+      "status": 200,
+      "title": "Project Color Beacons — Mark the right project",
+      "screenshot": "evidence/polish-3/live-download-gate-desktop.png",
+      "downloadHref": null,
+      "disabled": "true"
+    }
+  ],
+  "linkChecks": [
+    {
+      "href": "https://hello-factory.sociobot.in/",
+      "status": 200,
+      "finalUrl": "https://hello-factory.sociobot.in/"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/#download",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/#main",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/404.html#main",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/404.html"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/demo",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/demo"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/demo#main",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/demo"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/privacy",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/privacy"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/privacy#main",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/privacy"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/terms",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/terms"
+    },
+    {
+      "href": "https://project-color-beacons.sociobot.in/terms#main",
+      "status": 200,
+      "finalUrl": "https://project-color-beacons.sociobot.in/terms"
+    },
+    {
+      "href": "mailto:privacy@sociobot.in",
+      "status": "mailto"
+    },
+    {
+      "href": "mailto:support@sociobot.in",
+      "status": "mailto"
+    }
+  ]
+}

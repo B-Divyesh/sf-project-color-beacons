@@ -1,0 +1,14 @@
+{
+  "url": "https://project-color-beacons.sociobot.in/",
+  "loadMs": 770,
+  "errors": [],
+  "a11y": {
+    "title": "Project Color Beacons — Mark the right project",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 2136
+  }
+}
