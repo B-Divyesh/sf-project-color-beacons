@@ -13,8 +13,8 @@ const licenseKey = 'sb_license:project-color-beacons';
 const licenseCacheKey = 'pcb:license-verdict';
 
 let projects = loadProjects();
-let activeId: string | null = null;
-let confirmedId: string | null = null;
+let activeId: string | null = demoMode ? SAMPLE_PROJECTS[0]?.id ?? null : null;
+let confirmedId: string | null = activeId;
 let removedProject: Project | null = null;
 let licensed = demoMode || loadCachedLicense();
 
@@ -256,7 +256,15 @@ document.addEventListener('click', (event) => {
   if (action === 'confirm' && id) { const project = projects.find((item) => item.id === id); if (project) void confirmProject(project); }
   if (action === 'remove' && id) removeProject(id);
   if (action === 'undo' && removedProject) { projects.push(removedProject); removedProject = null; saveProjects(); render(); setStatus('Project restored.'); }
-  if (action === 'reset-demo') { localStorage.removeItem(storageKey); projects = structuredClone(SAMPLE_PROJECTS); saveProjects(); activeId = null; confirmedId = null; render(); setStatus('Demo reset to its sample projects.'); }
+  if (action === 'reset-demo') {
+    localStorage.removeItem(storageKey);
+    projects = structuredClone(SAMPLE_PROJECTS);
+    saveProjects();
+    activeId = SAMPLE_PROJECTS[0]?.id ?? null;
+    confirmedId = activeId;
+    render();
+    setStatus('Demo reset to the completed Atlas API sample.');
+  }
   if (action === 'exit-demo') localStorage.removeItem(storageKey);
 });
 

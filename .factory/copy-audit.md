@@ -1,46 +1,71 @@
-# Landing page copy audit
+# Copy audit
 
-Checked 2026-08-29. Word counts treat contractions and hyphenated terms as one word. No sentence exceeds 22 words. No sentence contains a banned marketing term.
+Checked 2026-08-29 after polish round 1. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
-| Words | Sentence |
-| ---: | --- |
-| 7 | Mark the project before you edit. |
-| 14 | For dyslexic and ADHD developers, a color, name, and symbol make similar windows clear. |
-| 7 | The demo opens three sample projects. |
-| 3 | Nothing is saved. |
-| 10 | Project data stays on your device during normal use. |
-| 9 | The demo reloads offline after its first visit. |
-| 6 | The free app stores three projects. |
-| 6 | See the project before the action. |
-| 7 | The confirmation strip repeats all three cues. |
-| 11 | You press the named button before editor settings change. |
-| 6 | Set a beacon in three steps. |
-| 11 | The app writes supported settings for VS Code, Cursor, and Zed. |
-| 6 | Existing JSON settings stay in place. |
-| 10 | Name the project and pick its symbol and color. |
-| 8 | Match the name, symbol, color, and local path. |
-| 9 | The app merges the beacon into supported project files. |
-| 5 | Keep the project in view. |
-| 9 | Every beacon includes a written name, symbol, and color. |
-| 8 | Editor settings wait for the named confirmation. |
-| 10 | Project data stays on this device during normal use. |
-| 4 | Start with three projects. |
-| 9 | Use every safety and accessibility feature for free. |
-| 8 | A valid license removes the project limit. |
-| 8 | Checking whether license purchases are available. |
-| 9 | License purchases are being prepared. The free app stores three projects. |
-| 5 | Downloads are being published. |
-| 10 | The Releases page will show them when ready. |
+## Landing page sentences
+
+| Words | Location | Sentence |
+| ---: | --- | --- |
+| 6 | h1 | Mark the project before you edit. |
+| 12 | hero | For dyslexic and ADHD developers who need distinct cues across similar project windows. |
+| 6 | demo note | The demo opens a completed sample. |
+| 3 | demo note | Nothing is saved. |
+| 9 | fact | Project data stays on your device during normal use. |
+| 8 | fact | The demo reloads offline after its first visit. |
+| 6 | fact | The free app stores three projects. |
+| 9 | image alternative | Six distinct ceramic symbols sit beside layered window-like panes. |
+| 8 | image caption | Each project repeats one symbol, color, and name. |
+| 7 | preview | The strip repeats the three beacon cues. |
+| 9 | preview | You press the named button before editor settings change. |
+| 11 | how it works | The app writes supported settings for VS Code, Cursor, and Zed. |
+| 7 | how it works | Existing unrelated JSON settings stay in place. |
+| 9 | step 1 | Name the project and pick its symbol and color. |
+| 9 | step 2 | Check the three beacon cues and the folder path. |
+| 9 | step 3 | The app merges the beacon into supported project files. |
+| 9 | privacy | Every beacon includes a written name, symbol, and color. |
+| 7 | privacy | Editor settings wait for the named confirmation. |
+| 9 | privacy | Project data stays on this device during normal use. |
+| 12 | pricing | Color, name, symbol, and confirmation are free for up to three projects. |
+| 7 | pricing | A valid license removes the project limit. |
+| 6 | license restore | Paste it to restore this device. |
+| 6 | footer | Mark each project before you edit. |
+
+## Landing headings and actions
+
+| Words | Type | Text |
+| ---: | --- | --- |
+| 4 | eyebrow | A local desktop helper |
+| 5 | primary action | Try it with sample data |
+| 3 | action | Download the app |
+| 4 | h2 | Preview the confirmation strip |
+| 6 | h2 | Set a beacon in three steps |
+| 3 | step heading | Choose a folder |
+| 3 | step heading | Check the strip |
+| 3 | step heading | Write editor settings |
+| 2 | eyebrow | Privacy boundaries |
+| 5 | h2 | What stays on your device |
+| 2 | eyebrow | Desktop app |
+| 4 | h2 | Start with three projects |
+| 2 | action | Verify license |
+
+## Demo and error copy checked
+
+The demo uses “three beacon cues” for color, name, and symbol. It calls the local path a separate “folder path.” The demo eyebrow is “Separate sample workspace.” Both 404 versions say “Page not found,” “This address does not match a page,” and “Return home.”
+
+## README check
+
+Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The free-feature sentence exactly matches the registered entitlement claim. Release-manifest, release-matrix, signing-gate, reset, and platform-selection statements each have a tagged claim test.
 
 ## Terminology
 
 | Concept | One term |
 | --- | --- |
 | A project's combined identity | beacon |
-| A local code directory | project folder |
+| Its three repeated identity parts | beacon cues |
+| The local directory check | folder path |
 | The pre-action identity display | confirmation strip |
 | The isolated sample experience | demo |
-| An entitlement that has passed verification | valid license |
+| An entitlement that passed verification | valid license |
 | Configuration written into an editor folder | editor settings |
 
-Catalog description: “Mark each project with a color, name, and symbol before you edit.” (12 words, 67 characters)
+Catalog description: “Mark each project with a color, name, and symbol before you edit.” (12 words, 65 characters without the newline.)

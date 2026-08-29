@@ -28,6 +28,13 @@
     "sandbox": "fresh site and desktop-demo browser contexts; select Northwind Store, leave the demo, assert the demo key is gone, and reopen the site demo in its initial state"
   },
   {
+    "id": "demo-reset",
+    "claim": "Reset demo restores the completed Atlas API sample and all three sample projects.",
+    "where": "README, demo banner, demo contract",
+    "test": "npm test -- --grep @claim:demo-reset",
+    "sandbox": "fresh /demo state; confirm Northwind Store, reset, then assert Atlas API is confirmed with its editor preview and exactly three projects"
+  },
+  {
     "id": "offline-reload",
     "claim": "The demo reloads offline after its first visit.",
     "where": "landing facts, README, demo contract",
@@ -36,10 +43,38 @@
   },
   {
     "id": "free-project-limit",
-    "claim": "The free app stores three projects; a valid license removes that limit.",
+    "claim": "Color, name, symbol, and confirmation are free for three projects; a valid license removes that limit.",
     "where": "landing facts, pricing, app license dialog, README, terms",
     "test": "npm test -- --grep @claim:free-project-limit",
-    "sandbox": "browser version of the app preloaded with three local projects; try to add a fourth"
+    "sandbox": "browser version of the app preloaded with three local projects; exercise all four free capabilities, try a fourth project, then verify a fixture license"
+  },
+  {
+    "id": "release-manifest",
+    "claim": "The release workflow generates SHA256SUMS and latest.json for its desktop packages.",
+    "where": "README",
+    "test": "npm test -- --grep @claim:release-manifest",
+    "sandbox": "temporary release directory with macOS, Windows, and Linux fixture packages; run the shipped manifest generator and inspect both outputs"
+  },
+  {
+    "id": "release-signing",
+    "claim": "Release publication requires Windows signing and macOS signing and notarization credentials.",
+    "where": "README, release workflow",
+    "test": "npm test -- --grep @claim:release-signing",
+    "sandbox": "inspect the shipped GitHub Actions workflow for credential gates, certificate import, signing configuration, and removal of unsigned release copy"
+  },
+  {
+    "id": "release-matrix",
+    "claim": "The release workflow targets macOS Intel and Apple silicon, Windows, and Linux packages.",
+    "where": "README, release workflow",
+    "test": "npm test -- --grep @claim:release-matrix",
+    "sandbox": "inspect the shipped GitHub Actions workflow for both macOS targets plus Windows, Linux, and the Tauri build action"
+  },
+  {
+    "id": "platform-download",
+    "claim": "The landing page selects a matching macOS, Windows, or Linux release asset.",
+    "where": "landing download section, README",
+    "test": "npm test -- --grep @claim:platform-download",
+    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and one recorded GitHub release response"
   },
   {
     "id": "settings-preserved",

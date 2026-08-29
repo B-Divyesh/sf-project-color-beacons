@@ -7,26 +7,33 @@ const browser = await chromium.launch();
 
 try {
   const routes = [
-    ['/', 'Project Color Beacons — Mark the right project'],
-    ['/demo', 'Demo — Project Color Beacons'],
-    ['/privacy', 'Privacy — Project Color Beacons'],
-    ['/terms', 'Terms — Project Color Beacons'],
-    ['/missing-live-check', 'Page not found — Project Color Beacons']
+    ['/', 'Project Color Beacons — Mark the right project', 200],
+    ['/demo', 'Demo — Project Color Beacons', 200],
+    ['/privacy', 'Privacy — Project Color Beacons', 200],
+    ['/terms', 'Terms — Project Color Beacons', 200],
+    ['/404.html', 'Page not found — Project Color Beacons', 200],
+    ['/missing-live-check', 'Page not found — Project Color Beacons', 404]
   ];
 
-  for (const [path, title] of routes) {
+  for (const [path, title, status] of routes) {
     const routeContext = await browser.newContext();
     const page = await routeContext.newPage();
     const errors = [];
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
     page.on('pageerror', (error) => errors.push(error.message));
     const response = await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' });
-    assert.equal(response?.status(), 200, `${path} must return HTTP 200`);
+    assert.equal(response?.status(), status, `${path} must return HTTP ${status}`);
     assert.equal(await page.title(), title);
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
     assert.equal(await page.locator('main').count(), 1);
     assert.equal(await page.locator('h1').count(), 1);
     assert.equal(await page.locator('img:not([alt])').count(), 0);
+    assert.equal(await page.locator('meta[name="description"]').count(), 1);
+    assert.equal(await page.locator('link[rel="canonical"]').count(), 1);
+    assert.equal(await page.locator('meta[property="og:title"]').count(), 1);
+    assert.equal(await page.locator('meta[name="twitter:card"]').count(), 1);
+    assert.equal(await page.getByRole('navigation', { name: 'Main navigation' }).count(), 1);
+    assert.equal(await page.getByRole('navigation', { name: 'Footer navigation' }).count(), 1);
     const axe = await new AxeBuilder({ page }).analyze();
     assert.deepEqual(axe.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')), []);
     assert.deepEqual(errors, [], `${path} must have no console or page errors`);
@@ -39,6 +46,10 @@ try {
   mobile.on('request', (request) => demoRequests.push(request.url()));
   await mobile.goto(`${origin}/demo`, { waitUntil: 'networkidle' });
   assert.ok((await mobile.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1);
+  assert.match(await mobile.locator('#demo-confirmation').innerText(), /Confirmed · Atlas API/);
+  assert.match(await mobile.locator('#config-output').innerText(), /Editor files ready for Atlas API/);
+  const atlasBox = await mobile.locator('.demo-project').filter({ hasText: 'Atlas API' }).boundingBox();
+  assert.ok(atlasBox && atlasBox.y + atlasBox.height <= 844, 'A complete Atlas API row must fit in the initial mobile viewport');
   await mobile.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
   assert.match(await mobile.locator('#demo-confirmation').innerText(), /Check before editing · Northwind Store/);
   assert.ok((await mobile.evaluate(() => localStorage.getItem('demo:pcb:site-state'))) !== null);
@@ -57,7 +68,8 @@ try {
   await mobile.waitForURL(`${origin}/#download`);
   assert.equal(await mobile.evaluate(() => localStorage.getItem('demo:pcb:site-state')), null);
   await mobile.goto(`${origin}/demo`);
-  assert.match(await mobile.locator('#demo-confirmation').innerText(), /Choose “Check project” to fill this strip/);
+  assert.match(await mobile.locator('#demo-confirmation').innerText(), /Confirmed · Atlas API/);
+  assert.match(await mobile.locator('#config-output').innerText(), /Editor files ready for Atlas API/);
 
   await mobile.evaluate(async () => {
     const registration = await navigator.serviceWorker.ready;

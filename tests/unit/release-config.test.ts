@@ -5,6 +5,17 @@ import { displayPrice, registeredBillingProduct } from '../../shared/billing';
 const readRepositoryFile = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 describe('release regression configuration', () => {
+  it('gives every registered claim exactly one tagged browser test', () => {
+    const claims = JSON.parse(readRepositoryFile('.factory/claims.json')) as Array<{ id: string }>;
+    const browserTests = readRepositoryFile('tests/claims.spec.ts');
+    for (const { id } of claims) {
+      const matches = browserTests.match(new RegExp(`@claim:${id}(?![a-z0-9-])`, 'g')) ?? [];
+      expect(matches, id).toHaveLength(1);
+    }
+    const taggedIds = [...browserTests.matchAll(/@claim:([a-z0-9-]+)/g)].map((match) => match[1]);
+    expect(new Set(taggedIds)).toEqual(new Set(claims.map(({ id }) => id)));
+  });
+
   it('keeps browser specs out of the unit-test command', () => {
     const config = readRepositoryFile('vitest.config.ts');
     expect(config).toContain("include: ['tests/unit/**/*.test.ts']");
@@ -24,6 +35,21 @@ describe('release regression configuration', () => {
       route: '/assets/*',
       headers: { 'Cache-Control': 'public, max-age=31536000, immutable' }
     });
+  });
+
+  it('rewrites only known app routes so unknown URLs use the HTTP 404 override', () => {
+    const config = JSON.parse(readRepositoryFile('site/public/staticwebapp.config.json')) as {
+      navigationFallback?: unknown;
+      routes?: Array<{ route?: string; rewrite?: string }>;
+      responseOverrides?: Record<string, { rewrite?: string }>;
+    };
+    expect(config.navigationFallback).toBeUndefined();
+    expect(config.routes).toEqual(expect.arrayContaining([
+      { route: '/demo', rewrite: '/index.html' },
+      { route: '/privacy', rewrite: '/index.html' },
+      { route: '/terms', rewrite: '/index.html' }
+    ]));
+    expect(config.responseOverrides?.['404']).toEqual({ rewrite: '/404.html' });
   });
 
   it('accepts a checkout only for this product from the public catalogue', async () => {

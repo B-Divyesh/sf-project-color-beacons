@@ -4,7 +4,7 @@ Mark each project with a color, name, and symbol before you edit.
 
 Project Color Beacons is a local desktop helper for developers who juggle similar windows. It gives each project folder a stable beacon and a named confirmation strip. The app writes supported per-project settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.
 
-## Try the safe demo
+## Try sample projects
 
 Open `/demo` or run the site locally and visit:
 
@@ -12,7 +12,7 @@ Open `/demo` or run the site locally and visit:
 http://localhost:5173/demo
 ```
 
-The demo includes Atlas API, Northwind Store, and Launch Docs. It writes only to a `demo:` browser storage key. Use **Reset demo** for a clean sample workspace.
+The demo opens with Atlas API confirmed and its editor-file preview ready. It also includes Northwind Store and Launch Docs. It writes only to a `demo:` browser storage key. Use **Reset demo** to restore that completed sample.
 
 ## Develop
 
@@ -41,7 +41,7 @@ The Playwright suite checks every published claim in `.factory/claims.json`. It 
 
 ## Install and release
 
-GitHub Actions builds unsigned packages when a `v*` tag is pushed:
+The release workflow targets these packages when a `v*` tag is pushed. Publication stops unless macOS signing/notarization and Windows signing credentials are present:
 
 - macOS: Intel and Apple silicon disk images
 - Windows: MSI or executable installer
@@ -49,11 +49,11 @@ GitHub Actions builds unsigned packages when a `v*` tag is pushed:
 
 The workflow publishes `SHA256SUMS` and `latest.json`. The landing page detects the operating system and resolves a matching asset through the GitHub API. Until the first release is published, it links to the Releases page.
 
-Unsigned apps may show an operating-system warning. On macOS, right-click the app and choose **Open**. On Windows, review the publisher warning before installation.
+The release workflow signs Windows packages and signs and notarizes macOS packages before it publishes them.
 
 ## Price and privacy
 
-All confirmation, editor, symbol, and color-blind features are free for three projects. A valid license removes the project limit. The site shows a purchase link only when the Sociobot catalogue has an active checkout.
+Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit. The site shows a purchase link only when the Sociobot catalogue has an active checkout.
 
 Project names, local paths, and settings stay on the device during normal use. A license check sends only the pasted license value to `api.sociobot.in`. Read the shipped `/privacy` and `/terms` pages for details.
 
