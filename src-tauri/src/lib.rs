@@ -1,6 +1,9 @@
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,21 +40,30 @@ fn read_object(path: &Path) -> Result<Value, String> {
     if !path.exists() {
         return Ok(Value::Object(Map::new()));
     }
-    let contents = fs::read_to_string(path).map_err(|error| format!("Could not read {}: {error}", path.display()))?;
-    serde_json::from_str(&contents).map_err(|error| format!("{} is not valid JSON: {error}", path.display()))
+    let contents = fs::read_to_string(path)
+        .map_err(|error| format!("Could not read {}: {error}", path.display()))?;
+    serde_json::from_str(&contents)
+        .map_err(|error| format!("{} is not valid JSON: {error}", path.display()))
 }
 
 fn write_merged(root: &Path, relative: &str, settings: Value) -> Result<String, String> {
     let path = root.join(relative);
-    let parent = path.parent().ok_or_else(|| "The editor file has no parent folder.".to_string())?;
-    fs::create_dir_all(parent).map_err(|error| format!("Could not create {}: {error}", parent.display()))?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| "The editor file has no parent folder.".to_string())?;
+    fs::create_dir_all(parent)
+        .map_err(|error| format!("Could not create {}: {error}", parent.display()))?;
     let mut existing = read_object(&path)?;
     if !existing.is_object() {
-        return Err(format!("{} must contain a JSON object. Fix that file, then try again.", path.display()));
+        return Err(format!(
+            "{} must contain a JSON object. Fix that file, then try again.",
+            path.display()
+        ));
     }
     merge_json(&mut existing, settings);
     let output = serde_json::to_string_pretty(&existing).map_err(|error| error.to_string())? + "\n";
-    fs::write(&path, output).map_err(|error| format!("Could not write {}: {error}", path.display()))?;
+    fs::write(&path, output)
+        .map_err(|error| format!("Could not write {}: {error}", path.display()))?;
     Ok(path.display().to_string())
 }
 
@@ -130,10 +142,19 @@ mod tests {
             editors: vec!["vscode".to_string()],
         };
         configure_project(project).expect("configure project");
-        let output: Value = serde_json::from_str(&fs::read_to_string(vscode.join("settings.json")).expect("read output")).expect("parse output");
+        let output: Value = serde_json::from_str(
+            &fs::read_to_string(vscode.join("settings.json")).expect("read output"),
+        )
+        .expect("parse output");
         assert_eq!(output["editor.fontSize"], 16);
-        assert_eq!(output["workbench.colorCustomizations"]["activityBar.background"], "#000000");
-        assert_eq!(output["workbench.colorCustomizations"]["statusBar.background"], "#176B78");
+        assert_eq!(
+            output["workbench.colorCustomizations"]["activityBar.background"],
+            "#000000"
+        );
+        assert_eq!(
+            output["workbench.colorCustomizations"]["statusBar.background"],
+            "#176B78"
+        );
         fs::remove_dir_all(root).expect("remove test folder");
     }
 
@@ -151,11 +172,20 @@ mod tests {
         let written = configure_project(project).expect("configure both supported editors");
         assert_eq!(written.len(), 2);
 
-        let vscode: Value = serde_json::from_str(&fs::read_to_string(root.join(".vscode/settings.json")).expect("read VS Code settings")).expect("parse VS Code settings");
-        assert_eq!(vscode["workbench.colorCustomizations"]["titleBar.activeBackground"], "#176B78");
+        let vscode: Value = serde_json::from_str(
+            &fs::read_to_string(root.join(".vscode/settings.json")).expect("read VS Code settings"),
+        )
+        .expect("parse VS Code settings");
+        assert_eq!(
+            vscode["workbench.colorCustomizations"]["titleBar.activeBackground"],
+            "#176B78"
+        );
         assert_eq!(vscode["window.title"], "◒ Atlas API — ${activeEditorShort}");
 
-        let zed: Value = serde_json::from_str(&fs::read_to_string(root.join(".zed/settings.json")).expect("read Zed settings")).expect("parse Zed settings");
+        let zed: Value = serde_json::from_str(
+            &fs::read_to_string(root.join(".zed/settings.json")).expect("read Zed settings"),
+        )
+        .expect("parse Zed settings");
         assert_eq!(zed["theme"]["dark"], "Tokyo Night");
         fs::remove_dir_all(root).expect("remove test folder");
     }

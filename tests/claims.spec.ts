@@ -1,16 +1,38 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { execFileSync } from 'node:child_process';
+import type { Page } from '@playwright/test';
+
+const productionOrigin = 'https://project-color-beacons.sociobot.in';
+
+async function serveLocalCandidateAtProductionOrigin(page: Page) {
+  await page.route(`${productionOrigin}/**`, async (route) => {
+    const requested = new URL(route.request().url());
+    const localUrl = `http://127.0.0.1:4173${requested.pathname}${requested.search}`;
+    const response = await route.fetch({ url: localUrl });
+    await route.fulfill({ response });
+  });
+}
 
 test('@claim:three-cues every sample project has a color, name, and symbol', async ({ page }) => {
   await page.goto('/demo');
-  const atlas = page.locator('.demo-project').filter({ hasText: 'Atlas API' });
-  await expect(atlas.getByLabel(/Fjord, half moon/)).toBeVisible();
-  await atlas.getByRole('button', { name: 'Check project' }).click();
-  const strip = page.locator('#demo-confirmation');
-  await expect(strip).toContainText('Atlas API');
-  await expect(strip).toContainText('Fjord');
-  await expect(strip.getByLabel(/Fjord, half moon/)).toBeVisible();
+  const samples = [
+    { name: 'Atlas API', beacon: 'Fjord', symbol: 'half moon' },
+    { name: 'Northwind Store', beacon: 'Ember', symbol: 'cross' },
+    { name: 'Launch Docs', beacon: 'Iris', symbol: 'arch' }
+  ];
+
+  for (const sample of samples) {
+    const project = page.locator('.demo-project').filter({ hasText: sample.name });
+    await expect(project.getByText(sample.name, { exact: true })).toBeVisible();
+    await expect(project.getByLabel(`${sample.beacon}, ${sample.symbol}`)).toBeVisible();
+    await project.getByRole('button', { name: 'Check project' }).click();
+
+    const strip = page.locator('#demo-confirmation');
+    await expect(strip).toContainText(sample.name);
+    await expect(strip).toContainText(sample.beacon);
+    await expect(strip.getByLabel(`${sample.beacon}, ${sample.symbol}`)).toBeVisible();
+  }
 });
 
 test('@claim:confirmation-before-write editor output appears only after confirmation', async ({ page }) => {
@@ -116,11 +138,31 @@ test('@claim:license-token-only sends only the pasted license value when verifyi
   await context.close();
 });
 
-test('@claim:checkout-availability hides checkout links when the catalogue cannot have an active entry', async ({ browser }) => {
-  const site = await browser.newPage();
-  await site.goto('http://127.0.0.1:4173/');
-  await expect(site.getByText('License purchases are being prepared.')).toBeVisible();
-  await expect(site.locator('a[href*="/checkout"]')).toHaveCount(0);
+test('@claim:checkout-availability shows checkout only for an active matching catalogue entry', async ({ browser }) => {
+  const unavailableContext = await browser.newContext();
+  const unavailableSite = await unavailableContext.newPage();
+  await serveLocalCandidateAtProductionOrigin(unavailableSite);
+  await unavailableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
+    json: { data: [{ slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' }] }
+  }));
+  await unavailableSite.goto(`${productionOrigin}/`);
+  await expect(unavailableSite.getByText('License purchases are being prepared.')).toBeVisible();
+  await expect(unavailableSite.locator('a[href*="/checkout"]')).toHaveCount(0);
+
+  const availableContext = await browser.newContext();
+  const availableSite = await availableContext.newPage();
+  await serveLocalCandidateAtProductionOrigin(availableSite);
+  const checkoutUrl = 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout';
+  await availableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
+    json: { data: [
+      { slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' },
+      { slug: 'project-color-beacons', checkout_url: checkoutUrl, price_minor: 2400, currency: 'USD' }
+    ] }
+  }));
+  await availableSite.goto(`${productionOrigin}/`);
+  await expect(availableSite.getByRole('link', { name: 'Buy a $24 license' })).toHaveAttribute('href', checkoutUrl);
+  await expect(availableSite.getByText('$24 one-time · unlimited projects')).toBeVisible();
+  await expect(availableSite.locator('a[href*="/checkout"]')).toHaveCount(1);
 
   const appContext = await browser.newContext();
   await appContext.addInitScript(() => {
@@ -135,7 +177,8 @@ test('@claim:checkout-availability hides checkout links when the catalogue canno
   await desktop.getByRole('button', { name: 'Add project' }).click();
   await expect(desktop.getByRole('link', { name: 'the Project Color Beacons site' })).toBeVisible();
   await expect(desktop.locator('a[href*="/checkout"]')).toHaveCount(0);
-  await site.close();
+  await unavailableContext.close();
+  await availableContext.close();
   await appContext.close();
 });
 

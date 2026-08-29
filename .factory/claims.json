@@ -67,6 +67,6 @@
     "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout.",
     "where": "pricing, terms, README",
     "test": "npm test -- --grep @claim:checkout-availability",
-    "sandbox": "mock an absent catalogue product and assert neither surface exposes a checkout link"
+    "sandbox": "mock mismatched and active matching catalogue responses; assert no checkout in the first state and the exact product link and price in the second"
   }
 ]
