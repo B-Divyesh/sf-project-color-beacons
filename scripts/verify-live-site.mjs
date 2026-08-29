@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { APP_VERSION, BUILD_DATE } from '../shared/build-info.mjs';
 
 const origin = 'https://project-color-beacons.sociobot.in';
 const browser = await chromium.launch();
@@ -34,6 +35,7 @@ try {
     assert.equal(await page.locator('meta[name="twitter:card"]').count(), 1);
     assert.equal(await page.getByRole('navigation', { name: 'Main navigation' }).count(), 1);
     assert.equal(await page.getByRole('navigation', { name: 'Footer navigation' }).count(), 1);
+    assert.match(await page.locator('.footer-meta').innerText(), new RegExp(`Version ${APP_VERSION.replaceAll('.', '\\.')} · Build ${BUILD_DATE.replaceAll('.', '\\.')}`));
     const axe = await new AxeBuilder({ page }).analyze();
     assert.deepEqual(axe.violations, []);
     const unexpectedErrors = path === '/missing-live-check'
@@ -105,6 +107,14 @@ try {
   assert.match(await mobile.locator('#demo-project-list').innerText(), /Atlas API/);
   await mobileContext.close();
 
+  const landingContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const landing = await landingContext.newPage();
+  await landing.goto(`${origin}/`, { waitUntil: 'networkidle' });
+  const priceFact = landing.getByText('Three projects are free; unlimited projects cost $24 once.');
+  const priceFactBox = await priceFact.boundingBox();
+  assert.ok(priceFactBox && priceFactBox.y + priceFactBox.height <= 844, 'The $24 price fact must fit in the first mobile viewport');
+  await landingContext.close();
+
   const reducedContext = await browser.newContext({ reducedMotion: 'reduce' });
   const reduced = await reducedContext.newPage();
   await reduced.goto(`${origin}/demo`);
@@ -139,11 +149,11 @@ try {
   const billing = await billingContext.newPage();
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
   const download = billing.locator('#download-button');
-  await download.getByText('Download for Linux').waitFor();
-  assert.match(await download.getAttribute('href') ?? '', /releases\/download\/v0\.1\.2\/.+\.(AppImage|deb)$/);
-  assert.equal(await download.getAttribute('aria-disabled'), null);
-  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 1);
-  assert.match(await billing.locator('#purchase-offer').innerText(), /\$24 one-time/);
+  await download.getByText('Verified Linux download pending').waitFor();
+  assert.equal(await download.getAttribute('href'), null);
+  assert.equal(await download.getAttribute('aria-disabled'), 'true');
+  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
+  assert.match(await billing.locator('#purchase-offer').innerText(), /verified desktop release/);
   await billingContext.close();
 
   const returnContext = await browser.newContext();
@@ -155,7 +165,7 @@ try {
   assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, signed-release and purchase gates, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, verified-release gate, and license return.');
 } finally {
   await browser.close();
 }

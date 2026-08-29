@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { displayPrice, registeredBillingProduct } from '../../shared/billing';
+import { APP_VERSION, BUILD_DATE } from '../../shared/build-info.mjs';
 
 const readRepositoryFile = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -50,6 +51,15 @@ describe('release regression configuration', () => {
       { route: '/terms', rewrite: '/index.html' }
     ]));
     expect(config.responseOverrides?.['404']).toEqual({ rewrite: '/404.html' });
+  });
+
+  it('builds the standalone 404 footer from the same build identity as the site shell', () => {
+    const template = readRepositoryFile('site/public/404.html.template');
+    const output = readRepositoryFile('site/public/404.html');
+    const shell = readRepositoryFile('site/src/main.ts');
+    expect(template).toContain('Version __APP_VERSION__ · Build __BUILD_DATE__');
+    expect(output).toContain(`Version ${APP_VERSION} · Build ${BUILD_DATE}`);
+    expect(shell).toContain("from '../../shared/build-info.mjs'");
   });
 
   it('accepts a checkout only for this product from the public catalogue', async () => {

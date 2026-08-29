@@ -40,7 +40,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm ci
-      - name: Import optional Windows signing certificate
+      - name: Require Windows code-signing certificate
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
@@ -49,10 +49,24 @@ jobs:
         run: |
           $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX)
           $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)
-          if ($hasCertificate -ne $hasPassword) {
-            throw 'Configure both WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD, or neither.'
+          if (-not $hasCertificate -or -not $hasPassword) {
+            throw 'WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD are required for a public release.'
           }
-          if (-not $hasCertificate) { Write-Output 'No Windows platform certificate configured; GitHub provenance will sign the candidate source identity.'; exit 0 }
+      - name: Require Apple signing and notarization credentials
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          test "${{ env.APPLE_SIGNING_CONFIGURED }}" = 'true' || {
+            printf '%s\n' 'Apple signing and notarization credentials are required for a public release.' >&2
+            exit 1
+          }
+      - name: Import Windows signing certificate
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
           $pfxPath = Join-Path $env:RUNNER_TEMP 'project-color-beacons.pfx'
           [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
           $password = ConvertTo-SecureString $env:WINDOWS_CERT_PASSWORD -AsPlainText -Force
@@ -65,8 +79,8 @@ jobs:
           $config.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name timestampUrl -Value 'http://timestamp.digicert.com'
           $config | ConvertTo-Json -Depth 20 | Set-Content $configPath
           Remove-Item $pfxPath
-      - name: Build unsigned or non-macOS package
-        if: matrix.platform != 'macos-latest' || env.APPLE_SIGNING_CONFIGURED != 'true'
+      - name: Build Windows or Linux package
+        if: matrix.platform != 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,14 +88,16 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: Project Color Beacons ${{ github.ref_name }}
           releaseBody: |
-            Source-signed desktop candidate. GitHub build provenance ties every package to this repository, workflow, commit, and tag.
+            Verified desktop release.
 
-            Verify a downloaded package with `gh attestation verify <file> --repo B-Divyesh/sf-project-color-beacons`, then compare SHA256SUMS. The macOS and Windows packages are not notarized or trust-store signed unless their optional repository credentials were configured for this run.
+            Windows installers have a verified Windows signature. macOS packages are signed and notarized. GitHub records which repository, workflow, commit, and tag produced each package.
+
+            Windows signature check: passed. macOS signing check: passed. macOS notarization check: passed.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
       - name: Build signed and notarized macOS package
-        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING_CONFIGURED == 'true'
+        if: matrix.platform == 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,12 +111,44 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: Project Color Beacons ${{ github.ref_name }}
           releaseBody: |
-            Source-signed desktop candidate. GitHub build provenance ties every package to this repository, workflow, commit, and tag.
+            Verified desktop release.
 
-            Verify a downloaded package with `gh attestation verify <file> --repo B-Divyesh/sf-project-color-beacons`, then compare SHA256SUMS. The macOS and Windows packages are not notarized or trust-store signed unless their optional repository credentials were configured for this run.
+            Windows installers have a verified Windows signature. macOS packages are signed and notarized. GitHub records which repository, workflow, commit, and tag produced each package.
+
+            Windows signature check: passed. macOS signing check: passed. macOS notarization check: passed.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
+      - name: Verify Windows installer signature
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path 'src-tauri/target' -Recurse -File | Where-Object { $_.Extension -in '.msi', '.exe' } | Select-Object -First 1
+          if (-not $installer) { throw 'No Windows installer was produced.' }
+          $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
+          if ($signature.Status -ne 'Valid') { throw "Windows signature verification failed: $($signature.Status)" }
+          @{ platform = 'windows'; asset = $installer.Name; authenticodeVerified = $true } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
+      - name: Verify macOS signing and notarization
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          disk_images=()
+          while IFS= read -r disk_image; do disk_images+=("$disk_image"); done < <(find src-tauri/target -name '*.dmg' -type f)
+          test "${#disk_images[@]}" -gt 0
+          for disk_image in "${disk_images[@]}"; do
+            assessment="$(spctl --assess --type open --context context:primary-signature --verbose "$disk_image" 2>&1)"
+            printf '%s\n' "$assessment"
+            printf '%s' "$assessment" | grep -Eq 'Notarized Developer ID|source=Notarized Developer ID'
+          done
+          node -e 'const fs=require("fs"); const names=process.argv.slice(1); fs.writeFileSync("platform-signature-${{ matrix.target }}.json", JSON.stringify({platform:"macOS",assets:names,codeSigned:true,notarized:true},null,2));' "${disk_images[@]##*/}"
+      - name: Upload platform signature report
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-signature-${{ matrix.target }}
+          path: platform-signature-*.json
+          if-no-files-found: error
 
   finish:
     needs: build
@@ -111,6 +159,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: mkdir release-assets && gh release download "${GITHUB_REF_NAME}" --dir release-assets
+      - name: Download platform signature reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: platform-signature-*
+          path: signature-reports
+          merge-multiple: true
       - name: Build checksums and download manifest
         run: node scripts/make-release-manifest.mjs release-assets "${GITHUB_REF_NAME}"
       - name: Sign package provenance with the release workflow identity
@@ -120,7 +174,9 @@ jobs:
           subject-checksums: release-assets/SHA256SUMS
       - name: Add the portable Sigstore bundle
         run: cp "${{ steps.provenance.outputs.bundle-path }}" release-assets/BUILD-PROVENANCE.sigstore.json
-      - name: Upload signed metadata and publish release
+      - name: Record verified platform signatures
+        run: node scripts/make-platform-signature-record.mjs release-assets signature-reports "${GITHUB_REF_NAME}"
+      - name: Upload verified metadata and publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -129,3 +185,4 @@ jobs:
             release-assets/SHA256SUMS
             release-assets/latest.json
             release-assets/BUILD-PROVENANCE.sigstore.json
+            release-assets/platform-signatures.json

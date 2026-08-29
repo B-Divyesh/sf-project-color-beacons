@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-29 after repair 6. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-29 after repair 7. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -12,7 +12,7 @@ Checked 2026-08-29 after repair 6. Hyphenated terms, paths, prices, and versions
 | 3 | demo note | Nothing is saved. |
 | 9 | fact | Project data stays on your device during normal use. |
 | 8 | fact | The demo reloads offline after its first visit. |
-| 6 | fact | The free app stores three projects. |
+| 9 | fact | Three projects are free; unlimited projects cost $24 once. |
 | 9 | image alternative | Six distinct ceramic symbols sit beside layered window-like panes. |
 | 8 | image caption | Each project repeats one symbol, color, and name. |
 | 7 | preview | The strip repeats the three beacon cues. |
@@ -27,9 +27,9 @@ Checked 2026-08-29 after repair 6. Hyphenated terms, paths, prices, and versions
 | 9 | privacy | Project data stays on this device during normal use. |
 | 12 | pricing | Color, name, symbol, and confirmation are free for up to three projects. |
 | 7 | pricing | A valid license removes the project limit. |
-| 6 | download state | Source-signed downloads are not published yet. |
+| 6 | download state | Verified desktop downloads are not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 8 | purchase state | License purchases open with a source-signed desktop build. |
+| 8 | purchase state | License purchases open with a verified desktop release. |
 | 6 | license restore | Paste it to restore this device. |
 | 6 | footer | Mark each project before you edit. |
 
@@ -50,7 +50,7 @@ Checked 2026-08-29 after repair 6. Hyphenated terms, paths, prices, and versions
 | 2 | eyebrow | Desktop app |
 | 4 | h2 | Start with three projects |
 | 2 | action | Verify license |
-| 4 | unavailable action | Source-signed Linux download pending |
+| 4 | unavailable action | Verified Linux download pending |
 
 ## Demo and error copy checked
 
@@ -58,7 +58,7 @@ The demo uses “three beacon cues” for color, name, and symbol. It calls the 
 
 ## README check
 
-Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, source-signing, reset, platform-selection, and checkout-release statements each have a tagged claim test.
+Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, GitHub-provenance, platform-signature, reset, platform-selection, and checkout-release statements each have a tagged claim test.
 
 ## Terminology
 
@@ -71,6 +71,6 @@ Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent f
 | The isolated sample experience | demo |
 | An entitlement that passed verification | valid license |
 | Configuration written into an editor folder | editor settings |
-| GitHub-signed build provenance | source signature |
+| GitHub record of package origin | GitHub provenance file |
 
-Catalog description: “Mark the right project with a color, name, and symbol before you edit.” (13 words, 70 characters without the newline.)
+Catalog description: “Mark each project with a color, name, and symbol before editing.” (11 words, 64 characters without the newline.)

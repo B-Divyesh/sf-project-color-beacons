@@ -64,10 +64,10 @@
   },
   {
     "id": "release-signing",
-    "claim": "Release publication signs package provenance with the GitHub repository, workflow, commit, and tag identity.",
+    "claim": "A recorded GitHub provenance file verifies each package's repository, workflow, commit, and tag identity.",
     "where": "README, release workflow",
     "test": "npm test -- --grep @claim:release-signing",
-    "sandbox": "inspect the shipped GitHub Actions workflow for OIDC and attestation permissions, checksum subjects, Sigstore bundle publication, and source-signed release copy"
+    "sandbox": "recorded GitHub Sigstore bundle; cryptographically verify the workflow identity, then assert the fixture package, repository, workflow, commit, and tag"
   },
   {
     "id": "release-matrix",
@@ -78,10 +78,17 @@
   },
   {
     "id": "platform-download",
-    "claim": "The landing page selects a matching macOS, Windows, or Linux asset only from a source-signed release.",
+    "claim": "The landing page selects a matching package only after every desktop package and required release record exist.",
     "where": "landing download section, README",
     "test": "npm test -- --grep @claim:platform-download",
-    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and source-signed and unsigned recorded GitHub release responses"
+    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents plus complete and incomplete recorded GitHub release responses"
+  },
+  {
+    "id": "platform-signatures",
+    "claim": "Desktop downloads require verified Windows signing and verified macOS signing and notarization records.",
+    "where": "README, release workflow, download gate",
+    "test": "npm test -- --grep @claim:platform-signatures",
+    "sandbox": "complete recorded release and platform-signature record, then invalid Windows and macOS verification records"
   },
   {
     "id": "settings-preserved",
@@ -113,7 +120,7 @@
   },
   {
     "id": "checkout-availability",
-    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout and a source-signed desktop release is published.",
+    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout and a verified desktop release is published.",
     "where": "pricing, terms, README",
     "test": "npm test -- --grep @claim:checkout-availability",
     "sandbox": "mock mismatched and active matching catalogue responses with complete signed and unsigned release responses; assert no checkout without both conditions and the exact product link and price only with both"

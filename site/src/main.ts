@@ -1,7 +1,8 @@
 import './site.css';
 import { SAMPLE_PROJECTS, beaconFor, selectedEditorFiles, type Project } from '../../shared/beacons';
 import { displayPrice, registeredBillingProductForCurrentOrigin } from '../../shared/billing';
-import { isInstallableSignedRelease, matchingPlatformAsset, type Release } from '../../shared/release-contract.mjs';
+import { isCompleteVerifiedRelease, matchingPlatformAsset, type Release } from '../../shared/release-contract.mjs';
+import { APP_VERSION, BUILD_DATE } from '../../shared/build-info.mjs';
 
 const app = document.getElementById('app');
 if (!app) throw new Error('The site root is missing.');
@@ -31,13 +32,13 @@ function header() {
 }
 
 function footer() {
-  return `<footer class="site-footer shell"><div><strong>Project Color Beacons</strong><p>Mark each project before you edit.</p><p class="footer-meta">Original generated ceramic image · Version 0.1.2 · Build 2026.08.29</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in">Built by Param Factory <span class="sr-only">(external site)</span></a></nav></footer>`;
+  return `<footer class="site-footer shell"><div><strong>Project Color Beacons</strong><p>Mark each project before you edit.</p><p class="footer-meta">Original generated ceramic image · Version ${APP_VERSION} · Build ${BUILD_DATE}</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in">Built by Param Factory <span class="sr-only">(external site)</span></a></nav></footer>`;
 }
 
 function landing() {
   return `${header()}<main id="main" tabindex="-1">
     <section class="hero shell">
-      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">View downloads</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>The free app stores three projects.</li></ul></div>
+      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">View downloads</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>Three projects are free; unlimited projects cost $24 once.</li></ul></div>
       <figure class="hero-art"><picture><source media="(max-width: 700px)" srcset="/assets/ceramic-beacons-mobile.webp"><img src="/assets/ceramic-beacons.webp" width="1180" height="787" fetchpriority="high" decoding="async" alt="Six distinct ceramic symbols sit beside layered window-like panes."></picture><span class="hero-seal" aria-hidden="true">◒</span><figcaption>Each project repeats one symbol, color, and name.</figcaption></figure>
     </section>
     <section class="preview-section shell" aria-labelledby="preview-title"><div class="section-intro"><h2 id="preview-title">Preview the confirmation strip</h2><p>The strip repeats the three beacon cues. You press the named button before editor settings change.</p></div>${productPreview()}</section>
@@ -47,7 +48,7 @@ function landing() {
       <figure class="step"><img src="/assets/walkthrough-3.webp" width="800" height="600" loading="lazy" decoding="async" alt="Editor settings preview after Atlas API is confirmed."><figcaption><span class="step-number">Step 3</span><strong>Write editor settings</strong>The app merges the beacon into supported project files.</figcaption></figure>
     </div></section>
     <section class="boundaries" aria-labelledby="privacy-title"><div class="shell"><div><p class="eyebrow">Privacy boundaries</p><h2 id="privacy-title">What stays on your device</h2></div><ul class="boundary-list"><li><strong>Repeat the cues.</strong> Every beacon includes a written name, symbol, and color.</li><li><strong>Confirm the project.</strong> Editor settings wait for the named confirmation.</li><li><strong>Keep data local.</strong> Project data stays on this device during normal use.</li></ul></div></section>
-    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" aria-disabled="true">Checking source-signed downloads…</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for a source-signed desktop build…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
+    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" aria-disabled="true">Checking verified downloads…</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for a verified desktop release…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
       <form class="license-restore" id="license-restore"><label for="site-license">Have a license? Paste it to restore this device.</label><input id="site-license" name="license" autocomplete="off" spellcheck="false"><button type="submit" aria-label="Verify license">Verify license</button><p id="license-status" class="status-message" role="status"></p></form>
     </section>
   </main>${footer()}`;
@@ -66,7 +67,7 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a source-signed desktop release is published.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a verified desktop release is published.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -234,12 +235,12 @@ async function setupDownloads(): Promise<Release | null> {
   button.textContent = `Checking ${platformLabel} downloads…`;
   try {
     const cache = JSON.parse(localStorage.getItem('pcb:release-cache') ?? '{}') as { at?: number; data?: Release };
-    let release = isInstallableSignedRelease(cache.data) ? cache.data : undefined;
+    let release = isCompleteVerifiedRelease(cache.data) ? cache.data : undefined;
     if (!release || !cache.at || Date.now() - cache.at > 3_600_000) {
       const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', { headers: { Accept: 'application/vnd.github+json' } });
       if (!response.ok) throw new Error('Release not available');
       const releases = await response.json() as Release[];
-      release = releases.find(isInstallableSignedRelease);
+      release = releases.find(isCompleteVerifiedRelease);
       if (!release) throw new Error('Release not available');
       localStorage.setItem('pcb:release-cache', JSON.stringify({ at: Date.now(), data: release }));
     }
@@ -248,13 +249,13 @@ async function setupDownloads(): Promise<Release | null> {
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    state.textContent = `${release.tag_name} · ${asset.name} · source-signed build`;
+    state.textContent = `${release.tag_name} · ${asset.name} · verified release`;
     return release;
   } catch {
     button.removeAttribute('href');
     button.setAttribute('aria-disabled', 'true');
-    button.textContent = `Source-signed ${platformLabel} download pending`;
-    state.textContent = 'Source-signed downloads are not published yet. The free browser demo remains available.';
+    button.textContent = `Verified ${platformLabel} download pending`;
+    state.textContent = 'Verified desktop downloads are not published yet. The free browser demo remains available.';
     return null;
   }
 }
@@ -263,7 +264,7 @@ async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
   if (!hasInstallableRelease) {
-    offer.textContent = 'License purchases open with a source-signed desktop build. The free browser demo remains available.';
+    offer.textContent = 'License purchases open with a verified desktop release. The free browser demo remains available.';
     return;
   }
   try {

@@ -1,8 +1,10 @@
 import {
   PROVENANCE_ASSET,
-  SIGNED_RELEASE_ATTESTATION,
-  isInstallableSignedRelease,
-  signedReleaseIssues
+  PLATFORM_SIGNATURES_ASSET,
+  VERIFIED_RELEASE_MARKER,
+  isCompleteVerifiedRelease,
+  platformSignatureIssues,
+  verifiedReleaseIssues
 } from '../shared/release-contract.mjs';
 
 const repository = process.env.RELEASE_REPOSITORY ?? 'B-Divyesh/sf-project-color-beacons';
@@ -45,25 +47,28 @@ function statementMatchesSource(statement, name, digest, release) {
     && statement.predicateType === 'https://slsa.dev/provenance/v1'
     && source.includes(`https://github.com/${repository}`)
     && source.includes('.github/workflows/release.yml')
-    && source.includes(`refs/tags/${release.tag_name}`);
+    && source.includes(`refs/tags/${release.tag_name}`)
+    && Boolean(release.target_commitish)
+    && source.includes(release.target_commitish);
 }
 
 try {
   const release = requestedTag
     ? await getJson(`${apiRoot}/releases/tags/${encodeURIComponent(requestedTag)}`)
     : (await getJson(`${apiRoot}/releases/latest`));
-  const issues = signedReleaseIssues(release);
+  const issues = verifiedReleaseIssues(release);
   if (issues.length) throw new Error(issues.join(' '));
-  if (!isInstallableSignedRelease(release)) throw new Error('The release is not installable.');
+  if (!isCompleteVerifiedRelease(release)) throw new Error('The release is not complete.');
 
   const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
   const sumsAsset = assets.get('SHA256SUMS');
   const manifestAsset = assets.get('latest.json');
   const provenanceAsset = assets.get(PROVENANCE_ASSET);
-  if (!sumsAsset?.browser_download_url || !manifestAsset?.browser_download_url || !provenanceAsset?.browser_download_url) {
+  const platformSignaturesAsset = assets.get(PLATFORM_SIGNATURES_ASSET);
+  if (!sumsAsset?.browser_download_url || !manifestAsset?.browser_download_url || !provenanceAsset?.browser_download_url || !platformSignaturesAsset?.browser_download_url) {
     throw new Error('Release metadata does not have downloadable URLs.');
   }
-  const [sumsText, manifest, publishedBundle] = await Promise.all([
+  const [sumsText, manifest, publishedBundle, platformSignatures] = await Promise.all([
     fetch(sumsAsset.browser_download_url).then(async (response) => {
       if (!response.ok) throw new Error(`Could not download SHA256SUMS (${response.status}).`);
       return response.text();
@@ -75,10 +80,16 @@ try {
     fetch(provenanceAsset.browser_download_url).then(async (response) => {
       if (!response.ok) throw new Error(`Could not download ${PROVENANCE_ASSET} (${response.status}).`);
       return response.json();
+    }),
+    fetch(platformSignaturesAsset.browser_download_url).then(async (response) => {
+      if (!response.ok) throw new Error(`Could not download ${PLATFORM_SIGNATURES_ASSET} (${response.status}).`);
+      return response.json();
     })
   ]);
+  const platformIssues = platformSignatureIssues(release, platformSignatures);
+  if (platformIssues.length) throw new Error(platformIssues.join(' '));
   const checksums = parseChecksums(sumsText);
-  const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET].includes(asset.name));
+  const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET, PLATFORM_SIGNATURES_ASSET].includes(asset.name));
   const publishedStatement = decodeStatement(publishedBundle);
   for (const asset of packageAssets) {
     const expected = checksums.get(asset.name);
@@ -111,7 +122,7 @@ try {
   console.log(JSON.stringify({
     repository,
     tag: release.tag_name,
-    attestation: SIGNED_RELEASE_ATTESTATION,
+    attestation: VERIFIED_RELEASE_MARKER,
     source: `${repository}/.github/workflows/release.yml@refs/tags/${release.tag_name}`,
     packages: packageAssets.map((asset) => asset.name),
     result: 'pass'

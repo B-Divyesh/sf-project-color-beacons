@@ -1,1 +1,1 @@
-Mark the right project with a color, name, and symbol before you edit.
+Mark each project with a color, name, and symbol before editing.

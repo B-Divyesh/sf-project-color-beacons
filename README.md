@@ -47,11 +47,11 @@ The release workflow targets these packages when a `v*` tag is pushed:
 - Windows: MSI or executable installer
 - Linux: AppImage and Debian package
 
-The workflow publishes `SHA256SUMS`, `latest.json`, and `BUILD-PROVENANCE.sigstore.json`. GitHub signs one SLSA provenance statement covering every package. The statement binds each checksum to this repository, workflow, commit, and tag.
+The workflow publishes `SHA256SUMS`, `latest.json`, and a GitHub provenance file. GitHub records the repository, workflow, commit, and tag for each package.
 
-The landing page detects the operating system and resolves a matching package through the GitHub API. It keeps downloads unavailable until every platform package and the source-signature bundle exist. macOS notarization and Windows trust-store signing remain optional because their owner certificates are not configured.
+The landing page detects the operating system and resolves a matching package through the GitHub API. It keeps downloads unavailable until every platform package, the GitHub provenance file, and verified platform-signature record exist. Windows packages require a verified Windows signature. macOS packages require verified signing and notarization.
 
-After publishing a release, run these independent checks. The first verifies the release files, checksums, manifest, and GitHub attestation records. The second cryptographically verifies one downloaded package against the repository identity.
+After publishing a release, run these independent checks. The first checks release files, checksums, the manifest, and GitHub's package-origin record. The second checks a downloaded package against the repository identity.
 
 ```bash
 npm run test:release
