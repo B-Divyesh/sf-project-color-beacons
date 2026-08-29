@@ -12,7 +12,7 @@ The demo starts with Atlas API already confirmed and its two editor-file preview
 - Northwind Store — Ember color and cross symbol
 - Launch Docs — Iris color and arch symbol
 
-Choose another **Check project** action, compare the three beacon cues and folder path, then choose the named **Confirm** button. The result displays the VS Code and Zed files that the desktop app would merge.
+Choose **Check Northwind Store** or another named sample action. Compare the three beacon cues and folder path, then choose the named **Confirm** button. The result displays the VS Code and Zed files that the desktop app would merge.
 
 ## Isolation and reset
 

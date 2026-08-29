@@ -1,36 +1,77 @@
-# Handoff — adversarial first-read review 2
+# Handoff — polish round 2
 
-## Outcome: FAIL
+## Outcome
 
-The independent review is in `.factory/review-2.md`. Product code was not changed.
+The cumulative source and live-site findings are repaired and deployed from commit `8d5eeb99f605b8e4b453c5f0e6b6f0ee5d5e421c`.
 
-## What was done
+The live product no longer offers the unsigned v0.1.1 packages. A new trusted Windows/macOS release cannot be created until the owner supplies platform signing credentials; this is the only remaining operator action and is outside repository control.
 
-- Opened the live landing page cold at 390 × 844 and 1440 × 900 and recorded the first-screen interpretation.
-- Audited the landing page and README sentence by sentence, including headings, actions, alternatives, claims, and terminology.
-- Exercised the one-click demo, realistic sample state, Reset, Start for real, storage isolation, request origins, and offline reload.
-- Rechecked all 15 findings from review 1 plus every earlier verification report.
-- Checked route metadata, 404 behavior, deep links, Back/Forward focus and scroll, link health, live accessibility, responsive layout, and visual identity.
-- Cloned commit `cae342f1eed0b9dd96ea06c7e37859bc7493a8ff` into a fresh temporary directory and ran every declared claim command separately.
+## What changed
+
+- Restored independent scroll positions through SPA Back and Forward while retaining h1 focus and route announcements.
+- Added unique project names to every demo and desktop Check control.
+- Put the demo status banner in a named landmark and tightened Axe checks to require zero violations.
+- Rewrote “Download the app” and “Check the strip” to name their actual results.
+- Aligned paid terms with the tested three-project entitlement.
+- Added the `beacon-stability` claim and a close/reopen persistence test.
+- Filtered fresh and cached GitHub responses to signed/notarized releases only. The landing page and both installer scripts refuse the current unsigned release.
+- Updated the claim registry, README, copy audit, demo wording, and the ≤120-character verb-first catalogue description.
+- Preserved the glacial ceramic visual system and original assets.
+
+The full finding-to-change-to-evidence map is in `.factory/polish-2.md`.
 
 ## Verification
 
+From a fresh local clone of the repair commit:
+
 ```sh
 npm ci
-# Every exact command in .factory/claims.json, individually
+# Every one of the 17 exact commands in .factory/claims.json, run separately
 npm test
 npm run test:unit
 npm run typecheck
 npm run build
-npm run test:live:site
-npm run test:live:billing
-/opt/fleet/lib/verify-url.sh https://project-color-beacons.sociobot.in <output-directory>
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
+cargo check --manifest-path src-tauri/Cargo.toml
+npm audit --audit-level=high
 ```
 
-Results: 16/16 declared claim commands passed; Playwright passed 22/22; Vitest passed 6/6; typecheck and build passed; both `dist/app` and `dist/site` were produced. The local and deployed site JavaScript hashes matched.
+Results: 17/17 individual claim commands passed; the full Playwright rerun passed 24/24; Vitest passed 6/6; Rust passed 2/2; typecheck, build, default Cargo check, formatting, and audit passed. The first full clean-clone Playwright run experienced a Chromium process crash during `platform-download`; its assertion had passed individually, and the immediate full clean rerun passed 24/24.
 
-## Remaining work
+Additional checks:
 
-Nine findings remain. The blockers are broken Back/Forward scroll restoration and the still-unsigned public v0.1.1 packages, which reopen review-1 finding F-1-9. High findings cover an untested stability promise, stronger-than-tested signing copy, and an untested multi-device license statement. Medium/minor findings cover duplicate demo control names, a demo landmark violation, a download action that only scrolls, and a vague step heading.
+- `CI=false npm run tauri -- build --bundles deb` passed and produced `Project Color Beacons_0.1.1_amd64.deb` (1,921,976 bytes).
+- `npm run test:live:site` passed routes, real 404, zero Axe violations, mobile, keyboard, history, privacy, demo disposal, offline reload, signed-release gating, billing UI, and license return.
+- `npm run test:live:billing` passed the live $24 product and hosted checkout redirect.
+- `/opt/fleet/lib/verify-url.sh https://project-color-beacons.sociobot.in .factory/evidence/polish-2/verify-url` passed with no console errors.
+- Live Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.655 s, CLS 0, TBT 55 ms.
+- Built site payload: 7.35 KB gzip JS, 3.67 KB gzip CSS, 12.7 KB mobile hero.
+- Local/live JavaScript SHA-256 match: `a92b0036091a0985304e020c20fc3c8442899a3e94324764cef4e077beb1574d`.
+- Azure deployment: `ed10553b-add5-4521-8418-43547c409902`; live `/` and `/demo` return 200; an unknown route returns 404.
 
-No infrastructure, DNS, billing, or product source was modified.
+Live evidence is under `.factory/evidence/polish-2/` in the worker workspace, including landing, demo, terms, 404, Lighthouse, and history-state records.
+
+## Needs operator action
+
+Add these GitHub Actions secrets, then dispatch `.github/workflows/release.yml` for a new version:
+
+- `APPLE_CERTIFICATE`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_SIGNING_IDENTITY`
+- `APPLE_ID`
+- `APPLE_PASSWORD`
+- `APPLE_TEAM_ID`
+- `WINDOWS_CERT_PFX`
+- `WINDOWS_CERT_PASSWORD`
+
+The repository currently has zero Actions secrets. The workflow will fail closed until all required credentials exist. After it publishes a release whose body starts with “Signed and notarized desktop builds.”, verify Windows Authenticode and Apple notarization independently. The product page will then expose the matching platform asset automatically.
+
+## Run and deploy
+
+```sh
+npm ci
+npm test
+npm run build:site
+/opt/fleet/lib/deploy-static.sh project-color-beacons dist/site
+```
