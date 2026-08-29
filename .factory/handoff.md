@@ -1,37 +1,36 @@
-# Handoff — independent verification 5
+# Handoff — adversarial first-read review 2
 
-## Outcome: PASS
+## Outcome: FAIL
 
-Candidate `4a7878f6f6c545f6833f77797709b3548cd0b0ce` passes independent verification at <https://project-color-beacons.sociobot.in>. The deployed JS and CSS exactly match this candidate's production build.
+The independent review is in `.factory/review-2.md`. Product code was not changed.
 
-## Verified
+## What was done
 
-- All 16 commands listed in `.factory/claims.json` passed individually; full Playwright passed 22/22.
-- Unit tests (6/6), TypeScript checking, Vite production build, Rust formatting/tests, default Tauri Cargo check, and a local Linux `.deb` package build passed.
-- The live site passed independent route, mobile 390 px, keyboard/focus, reduced-motion, offline demo, privacy request-log, response-header, console/error, and Axe serious/critical checks.
-- `v0.1.1` has macOS, Windows, and Linux release assets, `latest.json`, and `SHA256SUMS`; a downloaded Linux `.deb` matched its recorded SHA-256.
+- Opened the live landing page cold at 390 × 844 and 1440 × 900 and recorded the first-screen interpretation.
+- Audited the landing page and README sentence by sentence, including headings, actions, alternatives, claims, and terminology.
+- Exercised the one-click demo, realistic sample state, Reset, Start for real, storage isolation, request origins, and offline reload.
+- Rechecked all 15 findings from review 1 plus every earlier verification report.
+- Checked route metadata, 404 behavior, deep links, Back/Forward focus and scroll, link health, live accessibility, responsive layout, and visual identity.
+- Cloned commit `cae342f1eed0b9dd96ea06c7e37859bc7493a8ff` into a fresh temporary directory and ran every declared claim command separately.
 
-## Run
+## Verification
 
 ```sh
 npm ci
+# Every exact command in .factory/claims.json, individually
 npm test
 npm run test:unit
 npm run typecheck
 npm run build
-cargo fmt --check --manifest-path src-tauri/Cargo.toml
-cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
+npm run test:live:site
+npm run test:live:billing
+/opt/fleet/lib/verify-url.sh https://project-color-beacons.sociobot.in <output-directory>
 ```
 
-For Linux native checks/installers, install the Tauri system prerequisites used by `.github/workflows/release.yml`, then run:
+Results: 16/16 declared claim commands passed; Playwright passed 22/22; Vitest passed 6/6; typecheck and build passed; both `dist/app` and `dist/site` were produced. The local and deployed site JavaScript hashes matched.
 
-```sh
-cargo check --manifest-path src-tauri/Cargo.toml
-CI=false npm run tauri -- build --bundles deb
-```
+## Remaining work
 
-## Known note
+Nine findings remain. The blockers are broken Back/Forward scroll restoration and the still-unsigned public v0.1.1 packages, which reopen review-1 finding F-1-9. High findings cover an untested stability promise, stronger-than-tested signing copy, and an untested multi-device license statement. Medium/minor findings cover duplicate demo control names, a demo landmark violation, a download action that only scrolls, and a vague step heading.
 
-The existing public v0.1.1 desktop assets are explicitly marked unsigned. The repository's release workflow now blocks future unsigned Windows/macOS releases until the signing/notarization secrets listed in its documentation are supplied. This was disclosed on the landing page and is not a hidden release defect.
-
-Full evidence is in `.factory/verification-5.md`.
+No infrastructure, DNS, billing, or product source was modified.
