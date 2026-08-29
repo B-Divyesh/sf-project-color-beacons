@@ -36,7 +36,10 @@ try {
     assert.equal(await page.getByRole('navigation', { name: 'Footer navigation' }).count(), 1);
     const axe = await new AxeBuilder({ page }).analyze();
     assert.deepEqual(axe.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')), []);
-    assert.deepEqual(errors, [], `${path} must have no console or page errors`);
+    const unexpectedErrors = path === '/missing-live-check'
+      ? errors.filter((message) => !/Failed to load resource: the server responded with a status of 404/.test(message))
+      : errors;
+    assert.deepEqual(unexpectedErrors, [], `${path} must have no unexpected console or page errors`);
     await routeContext.close();
   }
 

@@ -1,42 +1,74 @@
-# Handoff — adversarial first-read review 1
+# Handoff — polish round 1
 
 ## Outcome
 
-Review verdict: **FAIL**. The full report is in `.factory/review-1.md`.
+All 15 adversarial review findings were addressed in the product, tests, claims registry, copy, routes, and release workflow. The repaired static site is live at <https://project-color-beacons.sociobot.in>. The deployed JavaScript hash matches the local release build.
 
-No product code was changed. The review found 15 items, including two blockers:
+The repair preserves the generated ceramic-beacon identity, ruled-paper grid, serif display type, teal controls, and red/violet/teal project symbols documented in `.factory/design.md`.
 
-1. The one-click demo does not show a completed, useful sample result in its first 390 × 844 viewport.
-2. Unknown URLs render a designed message but return HTTP 200 rather than a real 404 response.
+## What changed
 
-The remaining findings cover the incomplete standalone 404 skeleton, claims missing from `.factory/claims.json`, unsigned desktop packages, inconsistent cue terminology, and headings that do not meet the plain-words standard.
+- Seeded the isolated demo with a completed Atlas API result and editor-file preview; Reset restores it, and Start for real deletes demo storage.
+- Added real known-route rewrites, HTTP 404 behavior, complete route metadata/titles, navigation focus, and a full standalone 404 skeleton.
+- Rewrote the flagged first-screen, privacy, demo, cue, pricing, and 404 copy in plain words.
+- Expanded `.factory/claims.json` to 16 claims and made every ID map to exactly one tagged observable test.
+- Added fixture-backed release-manifest, signing-policy, matrix, and three-platform download tests.
+- Made release publication require Windows signing plus macOS signing and notarization credentials.
+- Updated the catalog description to: “Mark each project with a color, name, and symbol before you edit.”
+- Recorded the full finding-to-evidence map in `.factory/polish-1.md`.
 
-## Verification completed
+## Verification
 
-Run from a fresh temporary clone after `npm ci`:
+Clean clone: `/work/pcb-clean-7uAinI`
 
-- All 11 exact commands in `.factory/claims.json` passed separately.
-- `npm test` passed 14/14 tests.
-- `npm run test:unit` passed 4/4 tests.
-- `npm run typecheck` passed.
-- `npm run build` passed and produced `dist/app` and `dist/site`.
-- `npm run test:live:site` passed.
-- `npm run test:live:billing` passed.
+- `npm ci` — passed; 0 vulnerabilities.
+- All 16 exact `.factory/claims.json` test commands — passed separately.
+- `npm test` — 22/22 passed.
+- `npm run test:unit` — 6/6 passed.
+- `npm run typecheck` — passed.
+- `npm run build` — passed; `dist/app` and `dist/site` created.
+- `cargo fmt --check --manifest-path src-tauri/Cargo.toml` — passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — 2/2 passed.
+- `cargo check --manifest-path src-tauri/Cargo.toml` — passed with default Tauri features.
+- `CI=false npm run tauri -- build --bundles deb` — passed and produced `src-tauri/target/release/bundle/deb/Project Color Beacons_0.1.1_amd64.deb`.
 
-Live checks also confirmed:
+Production:
 
-- Cold first-screen clarity at 390 × 844 and 1440 × 900.
-- Same-origin demo requests and only `demo:pcb:site-state` storage.
-- Real-data sentinel isolation, Reset behavior, demo disposal, and offline reload.
-- Route metadata, keyboard focus, reduced motion, Axe results, link health, and distinct visual identity.
-- Factory `verify-url.sh` passed with no console errors.
-- Prior checkout, unit-test, cache-header, incomplete-claim-test, and demo-disposal defects remain fixed.
+- Deployment ID `2e64ee36-94f3-4c8f-9685-2bb3ce4a15e3` succeeded.
+- `npm run test:live:site` — passed all route, metadata, Axe, 390 px, keyboard, reduced-motion, same-origin privacy, demo, offline, download, billing UI, and license-return checks.
+- `npm run test:live:billing` — passed the live $24 catalogue item and hosted checkout redirect.
+- Factory `verify-url.sh` — passed with no console errors.
+- Route statuses: `/`, `/demo`, `/privacy`, `/terms`, and `/404.html` returned 200; a cold unknown URL returned 404.
+- Live Lighthouse — Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.71 s, CLS 0, TBT 34 ms.
+- Site bundle — 20.17 kB JS (7.10 kB gzip) and 12.31 kB CSS (3.63 kB gzip).
+- Deployed JS SHA-256 — `14fba1e78801849e1548c1440741724e0778cb6362678949ec1ce1b20eef56ec`, identical to the local build.
+- Evidence — `.factory/evidence/polish-1/` (live screenshots, verifier output, and Lighthouse JSON; intentionally ignored as generated evidence).
 
-## Files changed
+## Run and verify
 
-- Added `.factory/review-1.md`.
-- Replaced `.factory/handoff.md` with this review handoff.
+```sh
+npm ci
+npm run typecheck
+npm run test:unit
+npm test
+npm run build
+npm run test:live:site
+npm run test:live:billing
+```
 
-## Next step
+## Needs operator action
 
-Address every finding in `.factory/review-1.md`, deploy the repaired build, and rerun the whole review from a fresh browser context and clean clone. Do not treat the passing automated suite as acceptance while the two blockers and unlisted claims remain.
+The existing public v0.1.1 desktop release predates this repair and is unsigned. No Apple or Windows signing credentials are available in the repository, GitHub Actions secrets, or the factory key vault, so it cannot honestly be re-signed in this work order. The workflow now blocks any new unsigned release.
+
+Before creating the next `v*` tag, add these GitHub Actions secrets:
+
+- `APPLE_CERTIFICATE`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_SIGNING_IDENTITY`
+- `APPLE_ID`
+- `APPLE_PASSWORD`
+- `APPLE_TEAM_ID`
+- `WINDOWS_CERT_PFX`
+- `WINDOWS_CERT_PASSWORD`
+
+Then dispatch the release workflow, verify the macOS notarization ticket and Windows Authenticode signature, and replace the old v0.1.1 assets. This is the only external operator dependency; there are no source, test, site, accessibility, privacy, offline, routing, or deployment gaps.
