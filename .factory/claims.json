@@ -64,10 +64,10 @@
   },
   {
     "id": "release-signing",
-    "claim": "Release publication requires Windows signing and macOS signing and notarization credentials.",
+    "claim": "Release publication signs package provenance with the GitHub repository, workflow, commit, and tag identity.",
     "where": "README, release workflow",
     "test": "npm test -- --grep @claim:release-signing",
-    "sandbox": "inspect the shipped GitHub Actions workflow for credential gates, certificate import, signing configuration, and removal of unsigned release copy"
+    "sandbox": "inspect the shipped GitHub Actions workflow for OIDC and attestation permissions, checksum subjects, Sigstore bundle publication, and source-signed release copy"
   },
   {
     "id": "release-matrix",
@@ -78,10 +78,10 @@
   },
   {
     "id": "platform-download",
-    "claim": "The landing page selects a matching macOS, Windows, or Linux asset only from a signed release.",
+    "claim": "The landing page selects a matching macOS, Windows, or Linux asset only from a source-signed release.",
     "where": "landing download section, README",
     "test": "npm test -- --grep @claim:platform-download",
-    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and signed and unsigned recorded GitHub release responses"
+    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents and source-signed and unsigned recorded GitHub release responses"
   },
   {
     "id": "settings-preserved",
@@ -113,7 +113,7 @@
   },
   {
     "id": "checkout-availability",
-    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout and a signed desktop release is published.",
+    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout and a source-signed desktop release is published.",
     "where": "pricing, terms, README",
     "test": "npm test -- --grep @claim:checkout-availability",
     "sandbox": "mock mismatched and active matching catalogue responses with complete signed and unsigned release responses; assert no checkout without both conditions and the exact product link and price only with both"

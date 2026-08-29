@@ -1,4 +1,4 @@
-const CACHE = 'pcb-site-v2';
+const CACHE = 'pcb-site-v3';
 const CORE = ['/', '/demo', '/privacy', '/terms', '/favicon.svg', '/assets/ceramic-beacons-mobile.webp', '/assets/ceramic-beacons.webp'];
 
 self.addEventListener('install', (event) => {

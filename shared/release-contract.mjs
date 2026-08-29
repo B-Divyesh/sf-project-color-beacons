@@ -1,11 +1,12 @@
 /**
  * The landing page cannot inspect platform signatures in a browser. It can,
  * however, refuse to advertise a package until the release job has published
- * its signed-release attestation, checksums, manifest, and every supported
+ * its source-signed provenance bundle, checksums, manifest, and every supported
  * platform artifact. The post-publish verifier performs the network checks
  * against those same requirements before a release is handed off.
  */
-export const SIGNED_RELEASE_ATTESTATION = 'Signed and notarized desktop builds.';
+export const SIGNED_RELEASE_ATTESTATION = 'Source-signed desktop candidate.';
+export const PROVENANCE_ASSET = 'BUILD-PROVENANCE.sigstore.json';
 
 const platformRequirements = {
   macOS: [/x64\.dmg$/i, /aarch64\.dmg$/i],
@@ -36,7 +37,7 @@ export function signedReleaseIssues(release) {
   }
 
   const names = new Set((release.assets ?? []).map((asset) => asset.name));
-  for (const metadata of ['SHA256SUMS', 'latest.json']) {
+  for (const metadata of ['SHA256SUMS', 'latest.json', PROVENANCE_ASSET]) {
     if (!names.has(metadata)) issues.push(`Missing ${metadata}.`);
   }
   for (const [platform, patterns] of Object.entries(platformRequirements)) {

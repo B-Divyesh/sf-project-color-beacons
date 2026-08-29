@@ -67,6 +67,7 @@
 .demo-app { padding: 22px; margin-top: 34px; }
 .demo-app > h2 { font-size: clamp(1.65rem, 4vw, 2.35rem); margin-bottom: 16px; }
 .demo-confirmation { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; min-height: 96px; padding: 16px; border: 2px dashed var(--seam); border-radius: 14px; margin-bottom: 18px; color: var(--silt); }
+.demo-confirmation p { min-width: 0; overflow-wrap: anywhere; }
 .demo-confirmation.ready { border-style: solid; border-color: var(--warning); color: var(--ink); }
 .demo-confirmation.done { border-color: var(--safe); }
 .demo-project-list { display: grid; gap: 10px; }
@@ -108,9 +109,10 @@
   .demo-intro > .action-note { display: none; }
   .demo-app { margin-top: 16px; padding: 14px; }
   .demo-app > h2 { font-size: 1.55rem; margin-bottom: 12px; }
-  .demo-confirmation { grid-template-columns: 40px minmax(0, 1fr) minmax(104px, 38%); gap: 8px; min-height: 76px; padding: 10px; margin-bottom: 10px; }
+  .demo-confirmation { grid-template-columns: 40px minmax(0, 1fr); gap: 8px; min-height: 76px; padding: 10px; margin-bottom: 10px; }
   .demo-confirmation .beacon, .demo-project .beacon { width: 40px; height: 40px; flex-basis: 40px; }
   .demo-confirmation p { font-size: .82rem; line-height: 1.35; }
+  .demo-confirmation button { grid-column: 1 / -1; }
   .demo-confirmation button, .demo-project button { min-width: 0; width: 100%; padding-inline: 9px; font-size: .82rem; overflow-wrap: anywhere; }
   .config-output { margin-bottom: 10px; padding: 9px 11px; }
   .config-output h3 { font-size: 1.05rem; }

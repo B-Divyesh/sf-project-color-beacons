@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -36,29 +38,19 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm ci
-      - name: Require macOS signing and notarization credentials
-        if: matrix.platform == 'macos-latest'
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
-            test -n "${!name}" || { echo "Missing required signing secret: $name"; exit 1; }
-          done
-      - name: Import Windows signing certificate
+      - name: Import optional Windows signing certificate
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
           WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)) {
-            throw 'WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD are required; unsigned Windows releases are blocked.'
+          $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX)
+          $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)
+          if ($hasCertificate -ne $hasPassword) {
+            throw 'Configure both WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD, or neither.'
           }
+          if (-not $hasCertificate) { Write-Output 'No Windows platform certificate configured; GitHub provenance will sign the candidate source identity.'; exit 0 }
           $pfxPath = Join-Path $env:RUNNER_TEMP 'project-color-beacons.pfx'
           [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
           $password = ConvertTo-SecureString $env:WINDOWS_CERT_PASSWORD -AsPlainText -Force
@@ -83,7 +75,10 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Project Color Beacons ${{ github.ref_name }}
-          releaseBody: Signed and notarized desktop builds. Check SHA256SUMS before installing.
+          releaseBody: |
+            Source-signed desktop candidate. GitHub build provenance ties every package to this repository, workflow, commit, and tag.
+
+            Verify a downloaded package with `gh attestation verify <file> --repo B-Divyesh/sf-project-color-beacons`, then compare SHA256SUMS. The macOS and Windows packages are not notarized or trust-store signed unless their optional repository credentials were configured for this run.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
@@ -99,7 +94,14 @@ jobs:
         run: mkdir release-assets && gh release download "${GITHUB_REF_NAME}" --dir release-assets
       - name: Build checksums and download manifest
         run: node scripts/make-release-manifest.mjs release-assets "${GITHUB_REF_NAME}"
-      - name: Upload metadata and publish release
+      - name: Sign package provenance with the release workflow identity
+        id: provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-checksums: release-assets/SHA256SUMS
+      - name: Add the portable Sigstore bundle
+        run: cp "${{ steps.provenance.outputs.bundle-path }}" release-assets/BUILD-PROVENANCE.sigstore.json
+      - name: Upload signed metadata and publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -107,3 +109,4 @@ jobs:
           files: |
             release-assets/SHA256SUMS
             release-assets/latest.json
+            release-assets/BUILD-PROVENANCE.sigstore.json

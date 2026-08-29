@@ -10,19 +10,22 @@ esac
 
 release_json="$(mktemp)"
 checksums="$(mktemp)"
-trap 'rm -f "$release_json" "$checksums"' EXIT
+provenance="$(mktemp)"
+trap 'rm -f "$release_json" "$checksums" "$provenance"' EXIT
 curl -fsSL "https://api.github.com/repos/$repo/releases/latest" -o "$release_json"
-grep -q '"body": "Signed and notarized desktop builds\.' "$release_json" || {
-  printf '%s\n' 'A signed and notarized release is not published yet.' >&2
+grep -q '"body": "Source-signed desktop candidate\.' "$release_json" || {
+  printf '%s\n' 'A source-signed desktop release is not published yet.' >&2
   exit 1
 }
 asset_url="$(sed -n 's/.*"browser_download_url": "\([^"]*\)".*/\1/p' "$release_json" | grep "$pattern" | head -n 1)"
 checksum_url="$(sed -n 's/.*"browser_download_url": "\([^"]*SHA256SUMS\)".*/\1/p' "$release_json" | head -n 1)"
-[ -n "$asset_url" ] && [ -n "$checksum_url" ] || { printf '%s\n' 'A matching release is not published yet.' >&2; exit 1; }
+provenance_url="$(sed -n 's/.*"browser_download_url": "\([^"]*BUILD-PROVENANCE.sigstore.json\)".*/\1/p' "$release_json" | head -n 1)"
+[ -n "$asset_url" ] && [ -n "$checksum_url" ] && [ -n "$provenance_url" ] || { printf '%s\n' 'A matching source-signed release is not published yet.' >&2; exit 1; }
 filename="${asset_url##*/}"
 destination="${TMPDIR:-/tmp}/$filename"
 curl -fsSL "$asset_url" -o "$destination"
 curl -fsSL "$checksum_url" -o "$checksums"
+curl -fsSL "$provenance_url" -o "$provenance"
 expected="$(grep " $filename\$" "$checksums" | cut -d ' ' -f 1)"
 if command -v sha256sum >/dev/null 2>&1; then
   actual="$(sha256sum "$destination" | cut -d ' ' -f 1)"
@@ -30,6 +33,12 @@ else
   actual="$(shasum -a 256 "$destination" | cut -d ' ' -f 1)"
 fi
 [ "$expected" = "$actual" ] || { printf '%s\n' 'Checksum failed. The download was not installed.' >&2; exit 1; }
+if command -v gh >/dev/null 2>&1; then
+  gh attestation verify "$destination" --repo "$repo" --bundle "$provenance" >/dev/null
+  printf '%s\n' 'Verified GitHub source identity.'
+else
+  printf '%s\n' 'Checksum verified. Install GitHub CLI to verify the included source attestation.'
+fi
 if [ "$(uname -s)" = "Linux" ]; then
   install_dir="${XDG_BIN_HOME:-$HOME/.local/bin}"
   mkdir -p "$install_dir"

@@ -119,11 +119,11 @@ try {
   const billing = await billingContext.newPage();
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
   const download = billing.locator('#download-button');
-  await download.getByText('Signed Linux download pending').waitFor();
-  assert.equal(await download.getAttribute('href'), null);
-  assert.equal(await download.getAttribute('aria-disabled'), 'true');
-  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
-  assert.match(await billing.locator('#purchase-offer').innerText(), /License purchases open with a signed desktop build/);
+  await download.getByText('Download for Linux').waitFor();
+  assert.match(await download.getAttribute('href') ?? '', /releases\/download\/v0\.1\.2\/.+\.(AppImage|deb)$/);
+  assert.equal(await download.getAttribute('aria-disabled'), null);
+  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 1);
+  assert.match(await billing.locator('#purchase-offer').innerText(), /\$24 one-time/);
   await billingContext.close();
 
   const returnContext = await browser.newContext();

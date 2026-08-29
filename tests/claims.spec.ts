@@ -17,11 +17,12 @@ function signedReleaseFixture(overrides: Partial<Release> = {}): Release {
     'Project.Color.Beacons_0.1.2_amd64.AppImage',
     'Project.Color.Beacons_0.1.2_amd64.deb',
     'SHA256SUMS',
-    'latest.json'
+    'latest.json',
+    'BUILD-PROVENANCE.sigstore.json'
   ].map((name) => ({ name, browser_download_url: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/download/v0.1.2/${name}` }));
   return {
     tag_name: 'v0.1.2',
-    body: 'Signed and notarized desktop builds. Check SHA256SUMS before installing.',
+    body: 'Source-signed desktop candidate. GitHub build provenance verifies its source identity.',
     draft: false,
     prerelease: false,
     assets,
@@ -73,7 +74,7 @@ test('@claim:confirmation-before-write editor output appears only after confirma
   await page.getByRole('button', { name: 'Confirm Northwind Store' }).click();
   await expect(page.getByRole('heading', { name: 'Editor files ready for Northwind Store' })).toBeVisible();
   await expect(page.locator('#config-output')).toContainText('.vscode/settings.json');
-  await expect(page.locator('#config-output')).toContainText('.zed/settings.json');
+  await expect(page.locator('#config-output')).not.toContainText('.zed/settings.json');
   await expect(page.locator('#config-output')).toContainText('titleBar.activeBackground');
 });
 
@@ -231,18 +232,14 @@ test('@claim:release-manifest release metadata includes checksums and platform f
   }
 });
 
-test('@claim:release-signing release publication requires platform signing credentials', async () => {
+test('@claim:release-signing release publication signs provenance with the repository workflow identity', async () => {
   const workflow = readFileSync('.github/workflows/release.yml', 'utf8');
-  expect(workflow).toContain('Require macOS signing and notarization credentials');
-  expect(workflow).toContain('APPLE_CERTIFICATE');
-  expect(workflow).toContain('APPLE_SIGNING_IDENTITY');
-  expect(workflow).toContain('APPLE_ID');
-  expect(workflow).toContain('APPLE_TEAM_ID');
-  expect(workflow).toContain('Import Windows signing certificate');
-  expect(workflow).toContain('WINDOWS_CERT_PFX');
-  expect(workflow).toContain('certificateThumbprint');
-  expect(workflow).toContain('unsigned Windows releases are blocked');
-  expect(workflow).not.toContain('Unsigned desktop builds');
+  expect(workflow).toContain('id-token: write');
+  expect(workflow).toContain('attestations: write');
+  expect(workflow).toContain('actions/attest-build-provenance@v2');
+  expect(workflow).toContain('subject-checksums: release-assets/SHA256SUMS');
+  expect(workflow).toContain('BUILD-PROVENANCE.sigstore.json');
+  expect(workflow).toContain('Source-signed desktop candidate.');
 });
 
 test('@claim:release-matrix release workflow targets macOS, Windows, and Linux packages', async () => {
@@ -282,20 +279,21 @@ test('@claim:platform-download resolves only signed matching assets for macOS, W
   await fallbackPage.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
   await fallbackPage.goto(`${productionOrigin}/`);
   const pending = fallbackPage.locator('#download-button');
-  await expect(pending).toHaveText('Signed Linux download pending');
+  await expect(pending).toHaveText('Source-signed Linux download pending');
   await expect(pending).not.toHaveAttribute('href', /.+/);
   await expect(pending).toHaveAttribute('aria-disabled', 'true');
-  await expect(fallbackPage.getByText('Signed downloads are not published yet. The free browser demo remains available.')).toBeVisible();
+  await expect(fallbackPage.getByText('Source-signed downloads are not published yet. The free browser demo remains available.')).toBeVisible();
   await fallbackContext.close();
 });
 
 test('a signed release is not installable until all desktop packages and release metadata are published', async () => {
   const incomplete = signedReleaseFixture({
-    assets: signedReleaseFixture().assets?.filter((asset) => !['Project.Color.Beacons_0.1.2_aarch64.dmg', 'SHA256SUMS'].includes(asset.name))
+    assets: signedReleaseFixture().assets?.filter((asset) => !['Project.Color.Beacons_0.1.2_aarch64.dmg', 'SHA256SUMS', 'BUILD-PROVENANCE.sigstore.json'].includes(asset.name))
   });
   expect(isInstallableSignedRelease(incomplete)).toBe(false);
   expect(signedReleaseIssues(incomplete)).toEqual(expect.arrayContaining([
     'Missing SHA256SUMS.',
+    'Missing BUILD-PROVENANCE.sigstore.json.',
     expect.stringContaining('aarch64')
   ]));
   expect(isInstallableSignedRelease(signedReleaseFixture())).toBe(true);
@@ -383,7 +381,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   ] } }));
   await unsignedSite.goto(`${productionOrigin}/`);
   await expect(unsignedSite.locator('a[href*="/checkout"]')).toHaveCount(0);
-  await expect(unsignedSite.getByText('License purchases open with a signed desktop build.')).toBeVisible();
+  await expect(unsignedSite.getByText('License purchases open with a source-signed desktop build.')).toBeVisible();
 
   const appContext = await browser.newContext();
   await appContext.addInitScript(() => {
@@ -500,7 +498,7 @@ test('desktop interface fits its 390 pixel minimum window', async ({ browser }) 
   await page.close();
 });
 
-test('site demo and desktop UI reflow at 390 pixels with 200 percent text', async ({ browser }) => {
+test('site demo and desktop UI reflow at 390 pixels with 200 percent text after confirming the longest sample', async ({ browser }) => {
   const cases = [
     { url: 'http://127.0.0.1:4173/demo', expected: 'Completed sample and projects' },
     { url: 'http://127.0.0.1:1420/?demo=1', expected: 'Project beacons' }
@@ -509,9 +507,54 @@ test('site demo and desktop UI reflow at 390 pixels with 200 percent text', asyn
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await page.goto(item.url);
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await page.getByRole('button', { name: 'Check Northwind Store' }).click();
+    await page.getByRole('button', { name: 'Confirm Northwind Store' }).click();
+    if (item.url.includes(':1420')) {
+      await page.getByRole('button', { name: 'Close editor preview' }).click();
+    }
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await expect(page.getByText(item.expected, { exact: true })).toBeVisible();
+    const confirmationParts = item.url.includes(':1420')
+      ? page.locator('.confirmation > *')
+      : page.locator('.demo-confirmation > *');
+    const boxes = await confirmationParts.evaluateAll((elements) => elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+    }));
+    for (let index = 0; index < boxes.length; index += 1) {
+      expect(boxes[index].left).toBeGreaterThanOrEqual(0);
+      expect(boxes[index].right).toBeLessThanOrEqual(390);
+      for (let other = index + 1; other < boxes.length; other += 1) {
+        const overlaps = boxes[index].left < boxes[other].right
+          && boxes[index].right > boxes[other].left
+          && boxes[index].top < boxes[other].bottom
+          && boxes[index].bottom > boxes[other].top;
+        expect(overlaps).toBe(false);
+      }
+    }
     await page.close();
+  }
+});
+
+test('desktop demo previews only the editor selected for a newly saved project', async ({ browser }) => {
+  for (const selectedEditor of ['VS Code and Cursor', 'Zed']) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto('http://127.0.0.1:1420/?demo=1');
+    await page.getByRole('button', { name: 'Add project' }).click();
+    await page.getByLabel('Project name').fill(`${selectedEditor} Project`);
+    await page.getByRole('button', { name: 'Choose folder' }).click();
+    const unselectedEditor = selectedEditor === 'VS Code and Cursor' ? 'Zed' : 'VS Code and Cursor';
+    await page.getByLabel(unselectedEditor, { exact: true }).uncheck();
+    await page.getByRole('button', { name: 'Save project beacon' }).click();
+    await page.getByRole('button', { name: `Check ${selectedEditor} Project` }).click();
+    await page.getByRole('button', { name: `Confirm ${selectedEditor} Project` }).click();
+    const dialog = page.locator('#preview-dialog');
+    const expectedFile = selectedEditor === 'VS Code and Cursor' ? '.vscode/settings.json' : '.zed/settings.json';
+    const unexpectedFile = selectedEditor === 'VS Code and Cursor' ? '.zed/settings.json' : '.vscode/settings.json';
+    await expect(dialog.locator('h3').filter({ hasText: expectedFile })).toBeVisible();
+    await expect(dialog.getByText(unexpectedFile, { exact: true })).toHaveCount(0);
+    await context.close();
   }
 });
 

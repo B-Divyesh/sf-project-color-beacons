@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
 import {
+  PROVENANCE_ASSET,
   SIGNED_RELEASE_ATTESTATION,
   isInstallableSignedRelease,
   signedReleaseIssues
@@ -32,6 +32,22 @@ function parseChecksums(text) {
   return checksums;
 }
 
+function decodeStatement(bundle) {
+  const payload = bundle?.dsseEnvelope?.payload;
+  if (typeof payload !== 'string') throw new Error('A provenance record has no DSSE payload.');
+  return JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
+}
+
+function statementMatchesSource(statement, name, digest, release) {
+  const subjectMatches = statement.subject?.some((subject) => subject.name === name && subject.digest?.sha256 === digest);
+  const source = JSON.stringify(statement.predicate ?? {});
+  return subjectMatches
+    && statement.predicateType === 'https://slsa.dev/provenance/v1'
+    && source.includes(`https://github.com/${repository}`)
+    && source.includes('.github/workflows/release.yml')
+    && source.includes(`refs/tags/${release.tag_name}`);
+}
+
 try {
   const release = requestedTag
     ? await getJson(`${apiRoot}/releases/tags/${encodeURIComponent(requestedTag)}`)
@@ -43,10 +59,11 @@ try {
   const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
   const sumsAsset = assets.get('SHA256SUMS');
   const manifestAsset = assets.get('latest.json');
-  if (!sumsAsset?.browser_download_url || !manifestAsset?.browser_download_url) {
+  const provenanceAsset = assets.get(PROVENANCE_ASSET);
+  if (!sumsAsset?.browser_download_url || !manifestAsset?.browser_download_url || !provenanceAsset?.browser_download_url) {
     throw new Error('Release metadata does not have downloadable URLs.');
   }
-  const [sumsText, manifest] = await Promise.all([
+  const [sumsText, manifest, publishedBundle] = await Promise.all([
     fetch(sumsAsset.browser_download_url).then(async (response) => {
       if (!response.ok) throw new Error(`Could not download SHA256SUMS (${response.status}).`);
       return response.text();
@@ -54,16 +71,30 @@ try {
     fetch(manifestAsset.browser_download_url).then(async (response) => {
       if (!response.ok) throw new Error(`Could not download latest.json (${response.status}).`);
       return response.json();
+    }),
+    fetch(provenanceAsset.browser_download_url).then(async (response) => {
+      if (!response.ok) throw new Error(`Could not download ${PROVENANCE_ASSET} (${response.status}).`);
+      return response.json();
     })
   ]);
   const checksums = parseChecksums(sumsText);
-  const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json'].includes(asset.name));
+  const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET].includes(asset.name));
+  const publishedStatement = decodeStatement(publishedBundle);
   for (const asset of packageAssets) {
     const expected = checksums.get(asset.name);
     if (!expected) throw new Error(`SHA256SUMS has no entry for ${asset.name}.`);
     if (asset.digest && asset.digest !== `sha256:${expected}`) {
       throw new Error(`GitHub digest disagrees with SHA256SUMS for ${asset.name}.`);
     }
+    if (!statementMatchesSource(publishedStatement, asset.name, expected, release)) {
+      throw new Error(`${PROVENANCE_ASSET} does not bind ${asset.name} to this release source.`);
+    }
+    const attestationResponse = await getJson(`${apiRoot}/attestations/${encodeURIComponent(`sha256:${expected}`)}`);
+    const trustedRecord = attestationResponse.attestations?.some((attestation) => {
+      try { return statementMatchesSource(decodeStatement(attestation.bundle), asset.name, expected, release); }
+      catch { return false; }
+    });
+    if (!trustedRecord) throw new Error(`GitHub has no matching source attestation for ${asset.name}.`);
   }
   const expectedVersion = release.tag_name.replace(/^v/, '');
   if (manifest.version !== expectedVersion || manifest.tag !== release.tag_name) {
@@ -81,6 +112,7 @@ try {
     repository,
     tag: release.tag_name,
     attestation: SIGNED_RELEASE_ATTESTATION,
+    source: `${repository}/.github/workflows/release.yml@refs/tags/${release.tag_name}`,
     packages: packageAssets.map((asset) => asset.name),
     result: 'pass'
   }, null, 2));

@@ -60,6 +60,13 @@ export function editorPreview(project: Project) {
   };
 }
 
+export function selectedEditorFiles(project: Project) {
+  const preview = editorPreview(project);
+  return project.editors.map((editor) => editor === 'vscode'
+    ? { path: '.vscode/settings.json', settings: preview.vscode }
+    : { path: '.zed/settings.json', settings: preview.zed });
+}
+
 export function newId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `project-${Date.now()}`;
 }

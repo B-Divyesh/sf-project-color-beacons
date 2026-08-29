@@ -15,6 +15,7 @@ export type Release = {
 };
 
 export const SIGNED_RELEASE_ATTESTATION: string;
+export const PROVENANCE_ASSET: string;
 export function signedReleaseIssues(release: Release | undefined): string[];
 export function isInstallableSignedRelease(release: Release | undefined): release is Release;
 export function matchingPlatformAsset(release: Release, platform: ReleasePlatform): ReleaseAsset | undefined;

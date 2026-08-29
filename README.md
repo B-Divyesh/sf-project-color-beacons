@@ -41,20 +41,21 @@ The Playwright suite checks every published claim in `.factory/claims.json`. It 
 
 ## Install and release
 
-The release workflow targets these packages when a `v*` tag is pushed. Publication stops unless macOS signing/notarization and Windows signing credentials are present:
+The release workflow targets these packages when a `v*` tag is pushed:
 
 - macOS: Intel and Apple silicon disk images
 - Windows: MSI or executable installer
 - Linux: AppImage and Debian package
 
-The workflow publishes `SHA256SUMS` and `latest.json`. The landing page detects the operating system and resolves a matching signed asset through the GitHub API. It keeps the download unavailable when no signed release exists.
+The workflow publishes `SHA256SUMS`, `latest.json`, and `BUILD-PROVENANCE.sigstore.json`. GitHub signs one SLSA provenance statement covering every package. The statement binds each checksum to this repository, workflow, commit, and tag.
 
-The site offers a package and purchase link only when a complete release is marked as signed and notarized. It requires both macOS packages, a Windows package, AppImage and Debian packages, `SHA256SUMS`, and `latest.json`. Unsigned or incomplete releases stay unavailable from the product page.
+The landing page detects the operating system and resolves a matching package through the GitHub API. It keeps downloads unavailable until every platform package and the source-signature bundle exist. macOS notarization and Windows trust-store signing remain optional because their owner certificates are not configured.
 
-After publishing a release, run this independent release check. It verifies the release attestation, every required package, the manifest, and checksum agreement with GitHub's recorded artifact digests.
+After publishing a release, run these independent checks. The first verifies the release files, checksums, manifest, and GitHub attestation records. The second cryptographically verifies one downloaded package against the repository identity.
 
 ```bash
 npm run test:release
+gh attestation verify <downloaded-package> --repo B-Divyesh/sf-project-color-beacons
 ```
 
 ## Price and privacy

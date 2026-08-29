@@ -2,7 +2,7 @@ import './app.css';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { BEACONS, SAMPLE_PROJECTS, beaconFor, editorPreview, newId, type Project } from '../../shared/beacons';
+import { BEACONS, SAMPLE_PROJECTS, beaconFor, newId, selectedEditorFiles, type Project } from '../../shared/beacons';
 
 declare global { interface Window { __TAURI_INTERNALS__?: unknown; } }
 
@@ -154,10 +154,11 @@ async function confirmProject(project: Project) {
 
 function showConfigPreview(project: Project) {
   document.getElementById('preview-dialog')?.remove();
-  const preview = editorPreview(project);
+  const files = selectedEditorFiles(project);
   const dialog = document.createElement('dialog');
   dialog.id = 'preview-dialog';
-  dialog.innerHTML = `<form method="dialog"><div class="dialog-heading"><div><p class="eyebrow">Demo preview</p><h2>Editor files for ${escapeHtml(project.name)}</h2></div><button class="icon-button secondary" value="close" aria-label="Close editor preview">×</button></div><p>In the desktop app, these settings merge into the project folder.</p><h3>.vscode/settings.json</h3><pre>${escapeHtml(JSON.stringify(preview.vscode, null, 2))}</pre><h3>.zed/settings.json</h3><pre>${escapeHtml(JSON.stringify(preview.zed, null, 2))}</pre><div class="dialog-actions"><button value="close">Close preview</button></div></form>`;
+  const fileMarkup = files.map((file) => `<h3>${file.path}</h3><pre>${escapeHtml(JSON.stringify(file.settings, null, 2))}</pre>`).join('');
+  dialog.innerHTML = `<form method="dialog"><div class="dialog-heading"><div><p class="eyebrow">Demo preview</p><h2>Editor files for ${escapeHtml(project.name)}</h2></div><button class="icon-button secondary" value="close" aria-label="Close editor preview">×</button></div><p>In the desktop app, these settings merge into the project folder.</p>${fileMarkup}<div class="dialog-actions"><button value="close">Close preview</button></div></form>`;
   document.body.append(dialog);
   dialog.addEventListener('close', () => dialog.remove());
   dialog.showModal();
