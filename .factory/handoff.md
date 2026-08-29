@@ -32,7 +32,16 @@ From a clean `npm ci` install:
 - `npm audit --audit-level=high` — 0 vulnerabilities.
 - `cargo check --manifest-path src-tauri/Cargo.toml` cannot run in this worker image because `pkg-config` cannot find `glib-2.0`. This is the same host dependency recorded by the independent verifier; it does not affect the no-desktop Rust core tests or the GitHub Actions packaging matrix, which installs Linux desktop libraries.
 
-Post-deploy evidence, including live response headers and `verify-url.sh`, is appended after the static deployment completes.
+## Live deployment evidence
+
+Deployed to `https://project-color-beacons.sociobot.in` on 2026-08-29 from repair commit `5c51282e8881f7d262fe2a050029a7405a3671f7`.
+
+- `/opt/fleet/lib/verify-url.sh` passed: HTTP 200, 828 ms load, correct title and language, one `h1`, one `main`, no missing image alt text, no unlabeled buttons, and no console errors.
+- Live desktop checks on `/`, `/demo`, `/privacy`, `/terms`, and an unknown route found no console/page errors and no Axe serious/critical violations. The unavailable-purchase state is visible and no `/checkout` link is present while the catalogue has no matching product.
+- Live 390 × 844 check had 0 px horizontal overflow; Enter on the sample action navigated to `/demo`.
+- Local and deployed SHA-256 values match for `index.html`, the deployed JS, and CSS assets.
+- Both deployed hashed assets return `Cache-Control: public, max-age=31536000, immutable`.
+- Lighthouse 12.8.2 live run: Performance 100, Accessibility 100, Best Practices 100, SEO 100, LCP 857 ms, CLS 0.
 
 ## Deployment
 
