@@ -1,125 +1,82 @@
-# Handoff — repair 4
+# Handoff — independent verification 7
 
-## Status: deployed mitigation; desktop release remains externally blocked
+## Status: FAIL
 
-Repair commit: `6994beeea36107074fffe22ab42b790a0ff44388` (`fix: gate checkout on complete signed release`)
+Candidate 9698abe884e96c97f95b9567ec197453935d2efd was independently tested on
+2026-08-29 against <https://project-color-beacons.sociobot.in>.
 
-The independent verifier’s one finding was reproduced from the production GitHub
-release: `v0.1.1` says “Unsigned desktop builds.” The release has no signed
-desktop attestation, so it cannot truthfully be offered as a desktop download.
+The first-read gate and all 17 registered claims pass. The exact candidate
+build is live, the isolated demo works end to end, local/native builds pass,
+privacy behavior is correct, offline reload works, and rate limiting is
+enforced. The candidate still fails release acceptance for these defects:
 
-The static site repair is deployed at
-`https://project-color-beacons.sociobot.in`. It now keeps both the platform
-download and the $24 purchase link unavailable unless a complete signed release
-exists. Visitors can still use the free browser demo. This closes the misleading
-state where a paid unlock was offered while no installable desktop app existed.
+1. **Blocker:** no signed installable desktop release. v0.1.1 explicitly says
+   “Unsigned desktop builds”; npm run test:release fails; every live platform
+   download and the checkout are disabled.
+2. **Major:** the dark landing page has an Axe serious contrast failure on four
+   boundary labels: 1.24:1 instead of 4.5:1.
+3. **Major:** at 390px and 200% text, the site demo expands to 568px and the
+   desktop UI to 573px, requiring horizontal panning.
+4. **Moderate:** demo/banner/footer targets measure 25–36px high instead of the
+   required 44px.
 
-This worker cannot complete the remaining release acceptance requirement because
-the GitHub repository has no configured macOS or Windows signing secrets. No
-unsigned artifact or false “signed” label was published.
+Full evidence, hashes, commands, rate-limit results, and retest requirements
+are in [.factory/verification-7.md](verification-7.md).
 
-## What changed
+## Verification summary
 
-- Added one shared release contract. A browser-visible release must be
-  published, non-prerelease, carry the signed-build attestation, include both
-  macOS DMGs, a Windows package, AppImage, Debian package, `SHA256SUMS`, and
-  `latest.json`.
-- Made the purchase offer depend on that same complete release contract as the
-  download button. An active billing catalogue entry alone is no longer enough.
-- Added `npm run test:release`. It checks a published release’s attestation,
-  required packages, manifest entries, and the agreement between `SHA256SUMS`
-  and GitHub artifact digests.
-- Added exact regression coverage for the verifier’s state: active checkout +
-  unsigned release yields no purchase link; incomplete “signed” releases also
-  yield no download. The live-site verifier now checks that behavior.
-- Updated the release claim, README, and copy audit to match the new condition.
+~~~text
+npm ci                                                   PASS; 0 vulnerabilities
+17 individual claim commands                            PASS
+npm test                                                PASS; 25/25
+npm run test:unit                                       PASS; 6/6
+npm run typecheck                                       PASS
+npm run build                                           PASS
+cargo fmt --manifest-path src-tauri/Cargo.toml --check  PASS
+cargo test --manifest-path src-tauri/Cargo.toml --no-default-features  PASS; 2/2
+cargo check --manifest-path src-tauri/Cargo.toml        PASS
+CI=false npm run tauri -- build --bundles deb           PASS
+npm run test:live:site                                  PASS
+npm run test:live:billing                               PASS
+npm run test:release                                    FAIL; signed attestation absent
+~~~
 
-## Verification
+The native Linux checks require the same packages used in CI:
 
-Clean install and source checks:
+~~~sh
+apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+~~~
 
-```sh
-npm ci                                  # PASS; 0 vulnerabilities
-npm run typecheck                       # PASS
-npm run test:unit                       # PASS; 6/6
-npm test                                # PASS; 25/25 Playwright tests
-npm run build                           # PASS
-cargo fmt --manifest-path src-tauri/Cargo.toml --check  # PASS
-cargo test --manifest-path src-tauri/Cargo.toml --no-default-features  # PASS; 2/2
-cargo check --manifest-path src-tauri/Cargo.toml        # PASS
-CI=false npm run tauri -- build --bundles deb            # PASS
-```
+The locally built Debian package is 1,921,976 bytes and reports package
+project-color-beacons, version 0.1.1, amd64.
 
-The native package build used the same Linux dependencies as the release
-workflow (`libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`).
-It produced `Project Color Beacons_0.1.1_amd64.deb` (1,921,980 bytes).
-`dpkg-deb -I` reports package `project-color-beacons`, version `0.1.1`, amd64.
+## Needs operator action
 
-The full browser suite includes all 17 registered claims, 390 px desktop/site
-views, keyboard operation, route focus/history, reduced motion, offline reload,
-privacy request recording, and Axe checks. The changed
-`@claim:checkout-availability` test explicitly covers active catalogue + signed
-release, inactive catalogue, and active catalogue + unsigned release.
+Provision the signing inputs already named by .github/workflows/release.yml:
 
-Production site build sizes: JavaScript 21.65 kB (7.68 kB gzip); CSS 12.40 kB
-(3.67 kB gzip). The deployed hashes equal the local build:
+- APPLE_CERTIFICATE
+- APPLE_CERTIFICATE_PASSWORD
+- APPLE_SIGNING_IDENTITY
+- APPLE_ID
+- APPLE_PASSWORD
+- APPLE_TEAM_ID
+- WINDOWS_CERT_PFX
+- WINDOWS_CERT_PASSWORD
 
-```text
-fc37251b1f7e85c22c457acd2ec379fd35a9c52a423aae6205ab9d1221b48669  index-DiPrutmP.js
-7614b051fdff5eab9b5a7dd6b2a3880f6a9dca7f21ce762ccb4d80a4532dabe7  index-Du-siQ-1.css
-```
+Do not enable download or checkout until a new release is signed/notarized,
+contains both macOS architectures plus Windows, AppImage, Debian, SHA256SUMS,
+and latest.json, and passes npm run test:release.
 
-Live checks after deployment:
+Before that release, product code must also be repaired for dark contrast,
+200% text reflow, and 44px target sizes. Add dark-mode Axe, 200% text, and
+target-size regression coverage. Then rerun every claim and full verification
+sequence in .factory/verification-7.md.
 
-```sh
-npm run test:live:site                  # PASS
-npm run test:live:billing               # PASS
-/opt/fleet/lib/verify-url.sh https://project-color-beacons.sociobot.in <evidence-dir>  # PASS
-```
+## Known non-blocking notes
 
-Live site verification passed all routes, 390 px layout, keyboard focus,
-privacy/demo disposal, service-worker offline reload, zero Axe violations, and
-the signed-release/purchase gate. Response headers include the intended CSP
-with `frame-ancestors 'none'`, HSTS, `nosniff`, strict-origin referrer policy,
-and restrictive permissions policy. Lighthouse against the deployed site:
-performance 100, accessibility 100, LCP 1,648 ms, CLS 0.
-
-## Remaining operator action — required for a releasable desktop app
-
-`npm run test:release` currently fails as intended with:
-
-```text
-Release verification failed: The release does not carry the signed-build attestation.
-```
-
-The repository’s GitHub Actions secret list was empty during this repair. An
-owner must provision these existing workflow inputs, then publish a new `v*`
-tag through `.github/workflows/release.yml`:
-
-- `APPLE_CERTIFICATE`
-- `APPLE_CERTIFICATE_PASSWORD`
-- `APPLE_SIGNING_IDENTITY`
-- `APPLE_ID`
-- `APPLE_PASSWORD`
-- `APPLE_TEAM_ID`
-- `WINDOWS_CERT_PFX`
-- `WINDOWS_CERT_PASSWORD`
-
-After publication, run `npm run test:release` and confirm it passes before
-enabling the purchase link. The new release must contain signed/notarized macOS
-Intel and Apple silicon DMGs, a signed Windows installer, Linux AppImage and
-Debian packages, `SHA256SUMS`, and `latest.json`. Then rerun the live-site
-check on macOS, Windows, and Linux user agents to verify real download links.
-
-## Run locally
-
-```sh
-npm ci
-npm test
-npm run test:unit
-npm run typecheck
-npm run build
-cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
-CI=false npm run tauri -- build --bundles deb
-npm run test:release
-```
+- The live site appropriately fails closed: it offers the free browser demo
+  but no purchase while the desktop release is unsigned.
+- The published unsigned Debian checksum matches SHA256SUMS; this proves file
+  integrity only, not signing.
+- No AI feature is appropriate for this deterministic local accommodation
+  utility.
