@@ -79,7 +79,7 @@ async function verifyLicense(token: string): Promise<boolean> {
       licenseDialog.close();
       setStatus('License active. You can add unlimited projects.');
     } else {
-      error.textContent = 'This license is not active. Check the key or buy a new license.';
+      error.textContent = 'This license is not active. Check the key or use a purchase option when one is available.';
     }
     render();
     return verdict.valid;
@@ -165,8 +165,7 @@ function showConfigPreview(project: Project) {
 
 function openProjectDialog() {
   if (!licensed && projects.length >= 3) {
-    licenseDialog.showModal();
-    required<HTMLElement>('license-title').focus();
+    void openLicenseDialog();
     return;
   }
   projectForm.reset();
@@ -176,6 +175,13 @@ function openProjectDialog() {
   renderBeaconOptions();
   projectDialog.showModal();
   required<HTMLInputElement>('project-name').focus();
+}
+
+function openLicenseDialog() {
+  licenseDialog.showModal();
+  required<HTMLElement>('license-title').focus();
+  const offer = required<HTMLElement>('license-purchase');
+  offer.innerHTML = 'See current purchase availability on <a data-external href="https://project-color-beacons.sociobot.in/#download">the Project Color Beacons site</a>.';
 }
 
 function renderBeaconOptions() {
@@ -255,7 +261,7 @@ document.addEventListener('click', (event) => {
 
 required<HTMLButtonElement>('add-project').addEventListener('click', openProjectDialog);
 required<HTMLButtonElement>('choose-folder').addEventListener('click', () => void chooseFolder());
-required<HTMLButtonElement>('license-button').addEventListener('click', () => { licenseDialog.showModal(); required<HTMLElement>('license-title').focus(); });
+required<HTMLButtonElement>('license-button').addEventListener('click', openLicenseDialog);
 projectForm.addEventListener('submit', (event) => void submitProject(event));
 licenseForm.addEventListener('submit', (event) => {
   event.preventDefault();

@@ -109,9 +109,17 @@ pub fn run() {
 mod tests {
     use super::*;
 
+    fn test_root(label: &str) -> PathBuf {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        std::env::temp_dir().join(format!("pcb-{label}-{}-{nonce}", std::process::id()))
+    }
+
     #[test]
     fn claim_settings_preserved() {
-        let root = std::env::temp_dir().join(format!("pcb-merge-test-{}", std::process::id()));
+        let root = test_root("merge-test");
         let vscode = root.join(".vscode");
         fs::create_dir_all(&vscode).expect("create test folder");
         fs::write(vscode.join("settings.json"), r##"{"editor.fontSize":16,"workbench.colorCustomizations":{"activityBar.background":"#000000"}}"##).expect("write fixture");
@@ -126,6 +134,29 @@ mod tests {
         assert_eq!(output["editor.fontSize"], 16);
         assert_eq!(output["workbench.colorCustomizations"]["activityBar.background"], "#000000");
         assert_eq!(output["workbench.colorCustomizations"]["statusBar.background"], "#176B78");
+        fs::remove_dir_all(root).expect("remove test folder");
+    }
+
+    #[test]
+    fn claim_supported_editor_settings() {
+        let root = test_root("supported-editors");
+        fs::create_dir_all(&root).expect("create test folder");
+        let project = Project {
+            name: "Atlas API".to_string(),
+            path: root.display().to_string(),
+            beacon_id: "fjord".to_string(),
+            editors: vec!["vscode".to_string(), "zed".to_string()],
+        };
+
+        let written = configure_project(project).expect("configure both supported editors");
+        assert_eq!(written.len(), 2);
+
+        let vscode: Value = serde_json::from_str(&fs::read_to_string(root.join(".vscode/settings.json")).expect("read VS Code settings")).expect("parse VS Code settings");
+        assert_eq!(vscode["workbench.colorCustomizations"]["titleBar.activeBackground"], "#176B78");
+        assert_eq!(vscode["window.title"], "◒ Atlas API — ${activeEditorShort}");
+
+        let zed: Value = serde_json::from_str(&fs::read_to_string(root.join(".zed/settings.json")).expect("read Zed settings")).expect("parse Zed settings");
+        assert_eq!(zed["theme"]["dark"], "Tokyo Night");
         fs::remove_dir_all(root).expect("remove test folder");
     }
 }

@@ -1,5 +1,6 @@
 import './site.css';
 import { SAMPLE_PROJECTS, beaconFor, editorPreview, type Project } from '../../shared/beacons';
+import { displayPrice, registeredBillingProductForCurrentOrigin } from '../../shared/billing';
 
 const app = document.getElementById('app');
 if (!app) throw new Error('The site root is missing.');
@@ -35,17 +36,17 @@ function footer() {
 function landing() {
   return `${header()}<main id="main" tabindex="-1">
     <section class="hero shell">
-      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers, a color, name, and symbol make similar windows clear.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">Download the app</a><span class="action-note">The demo opens three sample projects. Nothing is saved.</span></div><ul class="plain-facts"><li>Project paths stay on your device.</li><li>The desktop app works offline.</li><li>Three projects are free. Unlimited projects cost $24 once.</li></ul></div>
+      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers, a color, name, and symbol make similar windows clear.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">Download the app</a><span class="action-note">The demo opens three sample projects. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>The free app stores three projects.</li></ul></div>
       <figure class="hero-art"><picture><source media="(max-width: 700px)" srcset="/assets/ceramic-beacons-mobile.webp"><img src="/assets/ceramic-beacons.webp" width="1180" height="787" fetchpriority="high" decoding="async" alt="Six distinct ceramic shapes sit beside layered window-like panes."></picture><span class="hero-seal" aria-hidden="true">◒</span><figcaption>Each project repeats one shape, color, and name.</figcaption></figure>
     </section>
     <section class="preview-section shell" aria-labelledby="preview-title"><div class="section-intro"><h2 id="preview-title">See the project before the action</h2><p>The confirmation strip repeats all three cues. You press the named button before editor settings change.</p></div>${productPreview()}</section>
-    <section class="steps shell" aria-labelledby="steps-title"><div class="section-intro"><h2 id="steps-title">Set a beacon in three steps</h2><p>The app adds supported settings for VS Code, Cursor, and Zed. Existing JSON settings stay in place.</p></div><div class="steps-grid">
+    <section class="steps shell" aria-labelledby="steps-title"><div class="section-intro"><h2 id="steps-title">Set a beacon in three steps</h2><p>The app writes supported settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.</p></div><div class="steps-grid">
       <figure class="step"><img src="/assets/walkthrough-1.webp" width="800" height="600" loading="lazy" decoding="async" alt="Project shelf with three sample projects and distinct beacons."><figcaption><span class="step-number">Step 1</span><strong>Choose a folder</strong>Name the project and pick its symbol and color.</figcaption></figure>
       <figure class="step"><img src="/assets/walkthrough-2.webp" width="800" height="600" loading="lazy" decoding="async" alt="Confirmation strip for Atlas API above the project shelf."><figcaption><span class="step-number">Step 2</span><strong>Check the strip</strong>Match the name, symbol, color, and local path.</figcaption></figure>
       <figure class="step"><img src="/assets/walkthrough-3.webp" width="800" height="600" loading="lazy" decoding="async" alt="Editor settings preview after Atlas API is confirmed."><figcaption><span class="step-number">Step 3</span><strong>Write editor settings</strong>The app merges the beacon into supported project files.</figcaption></figure>
     </div></section>
-    <section class="boundaries" aria-labelledby="privacy-title"><div class="shell"><div><p class="eyebrow">Quiet by design</p><h2 id="privacy-title">No watching. No diagnosis.</h2></div><ul class="boundary-list"><li><strong>No monitoring.</strong> The app does not watch keystrokes or score mistakes.</li><li><strong>No project upload.</strong> Names, paths, and settings stay on your device.</li><li><strong>No color-only state.</strong> Every beacon includes a written name and a symbol.</li><li><strong>No medical claim.</strong> This is an accommodation tool, not a diagnosis.</li></ul></div></section>
-    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Use every safety and accessibility feature for free. A license only removes the project limit.</p><div class="actions"><a class="button" id="download-button" href="https://github.com/B-Divyesh/sf-project-color-beacons/releases">View downloads</a><a class="button button-secondary" href="https://api.sociobot.in/api/v1/products/project-color-beacons/checkout">Buy a $24 license</a></div><p id="download-state" class="download-state" role="status">Checking for the latest desktop build…</p></div><div class="price"><strong>$24</strong><span>one-time · unlimited projects</span></div></div>
+    <section class="boundaries" aria-labelledby="privacy-title"><div class="shell"><div><p class="eyebrow">Privacy boundaries</p><h2 id="privacy-title">Keep the project in view</h2></div><ul class="boundary-list"><li><strong>Repeat the cues.</strong> Every beacon includes a written name, symbol, and color.</li><li><strong>Confirm the project.</strong> Editor settings wait for the named confirmation.</li><li><strong>Keep data local.</strong> Project data stays on this device during normal use.</li></ul></div></section>
+    <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Use every safety and accessibility feature for free. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" href="https://github.com/B-Divyesh/sf-project-color-beacons/releases">View downloads</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for the latest desktop build…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
       <form class="license-restore" id="license-restore"><label for="site-license">Have a license? Paste it to restore this device.</label><input id="site-license" name="license" autocomplete="off" spellcheck="false"><button type="submit" aria-label="Verify license">Verify license</button><p id="license-status" class="status-message" role="status"></p></form>
     </section>
   </main>${footer()}`;
@@ -60,11 +61,11 @@ function demo() {
 }
 
 function privacy() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 28 August 2026</p><h1>Your projects stay on your device.</h1><p>Project Color Beacons stores project names, local paths, beacons, and license details on your device.</p><h2>What the app stores</h2><p>The app stores your project list in its local application data. It writes editor settings only after you confirm a project.</p><h2>What leaves your device</h2><p>Nothing leaves your device during normal project use. License checks send only your license token to the Sociobot billing API.</p><h2>Demo data</h2><p>The web demo uses a separate <code>demo:</code> browser storage key. Resetting or leaving the demo discards that sample workspace.</p><h2>Analytics and contact</h2><p>This version has no analytics, advertising, crash reporting, or tracking. Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with privacy questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Your projects stay on your device.</h1><p>Project names, local paths, and beacons stay in local application storage during normal use.</p><h2>Editor settings</h2><p>The app writes supported editor settings only after you confirm the named project.</p><h2>License checks</h2><p>When you verify a license, the request contains only the license value that you paste.</p><h2>Demo data</h2><p>The web demo uses a separate <code>demo:</code> browser storage key. Resetting or leaving the demo discards that sample workspace.</p><h2>Contact</h2><p>Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with privacy questions.</p></article></main>${footer()}`;
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 28 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and paid use</h2><p>The free app supports three saved projects. A $24 one-time license supports unlimited projects on your devices.</p><h2>Purchases and refunds</h2><p>Sociobot and Dodo act as merchant of record. Their checkout handles payment and refunds. A refunded license stops working.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license supports unlimited projects on your devices.</p><h2>Purchases</h2><p>The site shows a purchase link only when the Sociobot product catalogue lists an active checkout.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -85,7 +86,7 @@ function renderRoute(path = location.pathname) {
   document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', description);
   app!.innerHTML = route === '/' ? landing() : route === '/demo' ? demo() : route === '/privacy' ? privacy() : route === '/terms' ? terms() : notFound();
   if (route === '/demo') setupDemo();
-  if (route === '/') { setupDownloads(); setupLicense(); }
+  if (route === '/') { setupDownloads(); setupLicense(); setupPurchaseOffer(); }
   const heading = document.querySelector<HTMLElement>('h1');
   heading?.setAttribute('tabindex', '-1');
   heading?.focus({ preventScroll: true });
@@ -201,6 +202,18 @@ async function setupDownloads() {
   }
 }
 
+async function setupPurchaseOffer() {
+  const offer = document.getElementById('purchase-offer');
+  if (!offer) return;
+  try {
+    const product = await registeredBillingProductForCurrentOrigin();
+    if (!product) throw new Error('Checkout is not registered.');
+    offer.innerHTML = `<a class="button button-secondary" href="${esc(product.checkout_url)}">Buy a ${displayPrice(product)} license</a><span>${displayPrice(product)} one-time · unlimited projects</span>`;
+  } catch {
+    offer.textContent = 'License purchases are being prepared. The free app stores three projects.';
+  }
+}
+
 type Release = { tag_name: string; assets: Array<{ name: string; browser_download_url: string }> };
 
 function setupLicense() {
@@ -232,7 +245,7 @@ async function verifySiteLicense(token: string) {
       localStorage.setItem('sb_license:project-color-beacons', token);
       localStorage.setItem('pcb:license-verdict', JSON.stringify({ valid: true, checkedAt: Date.now() }));
       if (status) status.textContent = 'License verified. Paste the same key into the desktop app.';
-    } else if (status) status.textContent = 'This license is not active. Check the key or buy a new license.';
+    } else if (status) status.textContent = 'This license is not active. Check the key or use a purchase option when one is available.';
   } catch {
     if (status) status.textContent = 'The license could not be checked. Check your connection and try again.';
   }

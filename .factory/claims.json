@@ -22,15 +22,15 @@
   },
   {
     "id": "offline-reload",
-    "claim": "The desktop app works offline, and the installed demo reloads offline after its first visit.",
-    "where": "landing facts, README",
+    "claim": "The demo reloads offline after its first visit.",
+    "where": "landing facts, README, demo contract",
     "test": "npm test -- --grep @claim:offline-reload",
     "sandbox": "fresh browser context; load /demo, wait for its service worker, go offline, and reload"
   },
   {
     "id": "free-project-limit",
-    "claim": "The free app stores three projects; a $24 one-time license removes that limit.",
-    "where": "landing facts, pricing, app license dialog, README",
+    "claim": "The free app stores three projects; a valid license removes that limit.",
+    "where": "landing facts, pricing, app license dialog, README, terms",
     "test": "npm test -- --grep @claim:free-project-limit",
     "sandbox": "browser version of the app preloaded with three local projects; try to add a fourth"
   },
@@ -40,5 +40,33 @@
     "where": "how it works, README",
     "test": "npm test -- --grep @claim:settings-preserved",
     "sandbox": "Rust core merge fixture with an existing editor font size and activity-bar color"
+  },
+  {
+    "id": "editor-settings",
+    "claim": "The app writes supported settings for VS Code, Cursor, and Zed.",
+    "where": "how it works, README",
+    "test": "npm test -- --grep @claim:editor-settings",
+    "sandbox": "Rust core fixture writes both supported editor files and checks their beacon settings"
+  },
+  {
+    "id": "project-data-local",
+    "claim": "Project data stays on the device during normal use.",
+    "where": "landing facts, privacy page, README",
+    "test": "npm test -- --grep @claim:project-data-local",
+    "sandbox": "browser desktop interface loads sample projects, confirms one, and records no external request"
+  },
+  {
+    "id": "license-token-only",
+    "claim": "A license check sends only the pasted license value.",
+    "where": "privacy page, README",
+    "test": "npm test -- --grep @claim:license-token-only",
+    "sandbox": "browser desktop interface intercepts the verification request after a pasted fixture token"
+  },
+  {
+    "id": "checkout-availability",
+    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout.",
+    "where": "pricing, terms, README",
+    "test": "npm test -- --grep @claim:checkout-availability",
+    "sandbox": "mock an absent catalogue product and assert neither surface exposes a checkout link"
   }
 ]

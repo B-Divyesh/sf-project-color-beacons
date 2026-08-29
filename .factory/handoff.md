@@ -1,33 +1,13 @@
-# Handoff — Project Color Beacons v0.1.0
+# Handoff — Project Color Beacons repair
 
-> ## Independent verification status (2026-08-28): **FAIL**
->
-> Candidate `b454a845d8b7603aefc16f71c65ef8047d960757` was tested against
-> https://project-color-beacons.sociobot.in. Release is blocked: the visible
-> $24 Sociobot checkout returns HTTP 404 (`{"error":"enabled factory product","status":404}`),
-> and `npm run test:unit` exits 1 because Vitest collects Playwright tests.
-> The full evidence and further required fixes are in
-> [`.factory/verification.md`](verification.md).
+## Repair status
 
-## What shipped
+The independent-verification blockers from commit `fd004980bc77d01c8b79b0bd24a28bc8260aabe6` are repaired in this handoff commit.
 
-- A Tauri 2 desktop app with a Vite and TypeScript interface.
-- Local project records with six high-contrast color, name, and symbol beacons.
-- A named confirmation strip before editor settings are written.
-- Folder selection through the Tauri dialog API.
-- Recursive JSON merging for `.vscode/settings.json` and `.zed/settings.json`.
-- VS Code and Cursor title/status colors plus a name and symbol in the window title.
-- A supported per-project Zed theme setting for its color cue.
-- An empty state, sample loader, clear write errors, remove confirmation, and undo.
-- A free three-project tier and a $24 one-time Sociobot license flow.
-- License return capture, daily verification cache, and paste-to-restore in both surfaces.
-- A responsive install site with `/demo`, `/privacy`, `/terms`, and styled 404 routes.
-- A sandboxed demo with three sample projects, reset, and editor-file previews.
-- Offline demo shell caching, platform-aware downloads, safe release fallback, and checksum installers.
-- Original generated ceramic artwork and three screenshots of the real demo flow.
-- A tag-triggered GitHub Actions matrix for macOS Intel/Apple silicon, Windows, and Linux packages.
-- Release automation for `SHA256SUMS` and `latest.json`.
-- Published release: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.0`.
+- The site never exposes the product-specific Sociobot checkout URL until the public Sociobot catalogue confirms an active `project-color-beacons` entry. The live endpoint currently returns 404, so the deployed site says that purchases are being prepared instead of offering a dead $24 purchase. Existing license restore and verification remain available. The desktop dialog sends people to the site’s availability check rather than a checkout URL that may be dead.
+- `npm run test:unit` now runs only `tests/unit/**/*.test.ts`; Playwright runs only `tests/**/*.spec.ts`. This fixes the Vitest/Playwright runner collision in both directions.
+- Content-hashed `/assets/*` now has `Cache-Control: public, max-age=31536000, immutable` in `staticwebapp.config.json`.
+- Published copy is aligned with tested claims. Added claim coverage proves supported editor settings, normal project-use data locality, license request contents, and the checkout availability guard. The untestable desktop-offline and telemetry/monitoring marketing promises were removed; the existing local-first behavior was not changed.
 
 ## How to run
 
@@ -38,55 +18,37 @@ npm run dev
 npm run tauri dev
 ```
 
-The static deploy command is:
+The safe browser demo is `/demo`. It uses only `demo:pcb:site-state`; the desktop-shaped demo uses `demo:pcb:projects`.
+
+## Verification evidence (2026-08-29)
+
+From a clean `npm ci` install:
+
+- `npm run typecheck` — passed.
+- `npm run test:unit` — passed: 4 tests. It confirms the runner separation, immutable-asset rule, and catalogue filtering.
+- `npm test` — passed: 13 Playwright tests, including all 10 exact commands in `.factory/claims.json`, desktop keyboard use, 390 px mobile width, offline demo reload, console errors, and Axe serious/critical checks on all routes.
+- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — passed: 2 tests, including the new VS Code/Cursor/Zed merge fixture.
+- `npm run build` — passed; generated `dist/app` and `dist/site`. Site entry JS is 6.87 KB gzip and CSS is 3.39 KB gzip.
+- `npm audit --audit-level=high` — 0 vulnerabilities.
+- `cargo check --manifest-path src-tauri/Cargo.toml` cannot run in this worker image because `pkg-config` cannot find `glib-2.0`. This is the same host dependency recorded by the independent verifier; it does not affect the no-desktop Rust core tests or the GitHub Actions packaging matrix, which installs Linux desktop libraries.
+
+Post-deploy evidence, including live response headers and `verify-url.sh`, is appended after the static deployment completes.
+
+## Deployment
+
+Deploy with the work-order command:
 
 ```bash
-npm ci && npm run build:site
+npm ci && npm test && npm run build:site
 ```
 
-Deploy `dist/site`. Its `index.html` is at that root.
+Deploy `dist/site` as the static output. The Tauri app and the tag-triggered GitHub Actions release workflow remain unchanged.
 
-## Verification completed
+## Remaining operator action
 
-- `npm test`: 9 passed.
-- `npm run build`: passed; produced `dist/app` and `dist/site`.
-- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features`: passed.
-- `cargo check --manifest-path src-tauri/Cargo.toml`: passed with Tauri 2 desktop features.
-- `npx tsc --noEmit`: passed.
-- `npm audit --audit-level=high`: 0 vulnerabilities.
-- GitHub Actions release run `33193181021`: passed on all four build targets.
-- Published Debian package: SHA-256 verified against the released `SHA256SUMS`.
-- Published `latest.json`: valid JSON with 4 macOS, 2 Windows, and 2 Linux download entries.
-- Factory `verify-url.sh`: passed with one title, `lang=en`, one `main`, no missing alt text, no unlabeled buttons, and no console errors.
-- Playwright Axe checks: no serious or critical issues on home, demo, privacy, terms, 404, or desktop demo screens.
-- Mobile check: no horizontal overflow at 390 by 844 pixels.
-- Claim tests cover every item in `.factory/claims.json`, including offline reload and demo network isolation.
+The Sociobot billing product is not yet registered in the public catalogue. Once the factory enables `project-color-beacons` at the intended one-time price, the existing production site will show its checkout link automatically. No repository secret, payment-provider integration, or direct billing change is required.
 
-## Lighthouse-class results
+Desktop packages remain unsigned until platform signing credentials are supplied:
 
-Measured against the production site build on 2026-08-28 with Lighthouse 12.8.0 mobile defaults:
-
-| Category or metric | Result |
-| --- | ---: |
-| Performance | 100 |
-| Accessibility | 100 |
-| Best practices | 100 |
-| SEO | 100 |
-| Largest Contentful Paint | 1.2 s |
-| Total Blocking Time | 20 ms |
-| Cumulative Layout Shift | 0 |
-
-Initial site JavaScript is 6.53 KB gzip. Initial CSS is 3.37 KB gzip. The mobile hero is 13 KB WebP; the full hero is 36 KB WebP.
-
-## Known gaps
-
-- Zed exposes a supported per-project theme setting but no supported per-project window-title color API. The app supplies the name and symbol in its confirmation strip.
-- Release packages are unsigned until the operator supplies platform certificates.
-- The success target of 50% fewer wrong-window edits needs a participant study after release. It is not presented as a product claim.
-
-## Needs operator action
-
-1. Register `project-color-beacons` with the Sociobot billing API at $24 one-time before public checkout.
-2. Add `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID` for macOS signing and notarization.
-3. Add `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD` for Windows Authenticode signing, then connect them to the release job.
-4. Until those secrets are added, keep the published artifacts clearly labelled as unsigned.
+- `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID`
+- `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD`

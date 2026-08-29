@@ -58,16 +58,85 @@ test('@claim:free-project-limit fourth project opens the license choice', async 
     ]));
   });
   const page = await context.newPage();
+  await page.route('**/api/v1/products/project-color-beacons/verify?license=fixture-license', (route) => route.fulfill({ json: { valid: true } }));
   await page.goto('http://127.0.0.1:1420');
   await page.getByRole('button', { name: 'Add project' }).click();
   await expect(page.getByRole('heading', { name: 'Use unlimited projects' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Buy a $24 license' })).toHaveAttribute('href', /api\.sociobot\.in/);
+  await expect(page.getByRole('link', { name: 'the Project Color Beacons site' })).toHaveAttribute('href', /#download$/);
+  await page.locator('#license-key').fill('fixture-license');
+  await page.getByRole('button', { name: 'Verify license' }).click();
+  await expect(page.getByText('License active. You can add unlimited projects.')).toBeVisible();
+  await page.getByRole('button', { name: 'Add project' }).click();
+  await expect(page.getByRole('heading', { name: 'Add a project' })).toBeVisible();
   await context.close();
 });
 
 test('@claim:settings-preserved editor JSON merge keeps unrelated values', async () => {
   const output = execFileSync('cargo', ['test', '--manifest-path', 'src-tauri/Cargo.toml', '--no-default-features', 'claim_settings_preserved'], { encoding: 'utf8' });
   expect(output).toContain('test result: ok');
+});
+
+test('@claim:editor-settings Rust core writes the supported VS Code, Cursor, and Zed settings', async () => {
+  const output = execFileSync('cargo', ['test', '--manifest-path', 'src-tauri/Cargo.toml', '--no-default-features', 'claim_supported_editor_settings'], { encoding: 'utf8' });
+  expect(output).toContain('test result: ok');
+});
+
+test('@claim:project-data-local normal desktop use sends no project data to another origin', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const outsideRequests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== 'http://127.0.0.1:1420') outsideRequests.push(request.url());
+  });
+  await page.goto('http://127.0.0.1:1420/?demo=1');
+  await page.locator('.project-card').filter({ hasText: 'Atlas API' }).getByRole('button', { name: 'Check project' }).click();
+  await page.getByRole('button', { name: 'Confirm Atlas API' }).click();
+  await expect(page.getByRole('heading', { name: 'Editor files for Atlas API' })).toBeVisible();
+  expect(outsideRequests).toEqual([]);
+  await context.close();
+});
+
+test('@claim:license-token-only sends only the pasted license value when verifying', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  let verificationUrl = '';
+  let verificationBody: string | null = 'not-called';
+  await page.route('**/api/v1/products/project-color-beacons/verify*', (route) => {
+    verificationUrl = route.request().url();
+    verificationBody = route.request().postData();
+    return route.fulfill({ json: { valid: false } });
+  });
+  await page.goto('http://127.0.0.1:1420');
+  await page.getByRole('button', { name: 'License' }).click();
+  await page.locator('#license-key').fill('fixture-license');
+  await page.getByRole('button', { name: 'Verify license' }).click();
+  await expect(page.getByText('This license is not active.')).toBeVisible();
+  expect(verificationUrl).toBe('https://api.sociobot.in/api/v1/products/project-color-beacons/verify?license=fixture-license');
+  expect(verificationBody).toBeNull();
+  await context.close();
+});
+
+test('@claim:checkout-availability hides checkout links when the catalogue cannot have an active entry', async ({ browser }) => {
+  const site = await browser.newPage();
+  await site.goto('http://127.0.0.1:4173/');
+  await expect(site.getByText('License purchases are being prepared.')).toBeVisible();
+  await expect(site.locator('a[href*="/checkout"]')).toHaveCount(0);
+
+  const appContext = await browser.newContext();
+  await appContext.addInitScript(() => {
+    localStorage.setItem('pcb:projects', JSON.stringify([
+      { id: '1', name: 'One', path: '/one', beaconId: 'fjord', editors: [], createdAt: 1 },
+      { id: '2', name: 'Two', path: '/two', beaconId: 'ember', editors: [], createdAt: 2 },
+      { id: '3', name: 'Three', path: '/three', beaconId: 'iris', editors: [], createdAt: 3 }
+    ]));
+  });
+  const desktop = await appContext.newPage();
+  await desktop.goto('http://127.0.0.1:1420');
+  await desktop.getByRole('button', { name: 'Add project' }).click();
+  await expect(desktop.getByRole('link', { name: 'the Project Color Beacons site' })).toBeVisible();
+  await expect(desktop.locator('a[href*="/checkout"]')).toHaveCount(0);
+  await site.close();
+  await appContext.close();
 });
 
 test('routes have accessible structure and no serious Axe findings', async ({ page }) => {

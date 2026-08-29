@@ -2,9 +2,7 @@
 
 Mark each project with a color, name, and symbol before you edit.
 
-Project Color Beacons is a local desktop helper for developers who juggle similar windows. It gives each project folder a stable beacon and a named confirmation strip. The app can merge supported per-project settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.
-
-The app does not diagnose attention or reading differences. It does not monitor typing, collect analytics, or upload project paths.
+Project Color Beacons is a local desktop helper for developers who juggle similar windows. It gives each project folder a stable beacon and a named confirmation strip. The app writes supported per-project settings for VS Code, Cursor, and Zed. Existing unrelated JSON settings stay in place.
 
 ## Try the safe demo
 
@@ -31,6 +29,8 @@ npm run tauri dev    # native desktop window
 
 ```bash
 npm test
+npm run test:unit
+npm run typecheck
 cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
 npm run build
 ```
@@ -53,9 +53,9 @@ Unsigned apps may show an operating-system warning. On macOS, right-click the ap
 
 ## Price and privacy
 
-All confirmation, editor, symbol, and color-blind features are free for three projects. A $24 one-time license removes the project limit. Checkout and license verification use the Sociobot billing API.
+All confirmation, editor, symbol, and color-blind features are free for three projects. A valid license removes the project limit. The site shows a purchase link only when the Sociobot catalogue has an active checkout.
 
-Project data stays in local app storage. A license check sends only the pasted license token to `api.sociobot.in`. Read the shipped `/privacy` and `/terms` pages for details.
+Project names, local paths, and settings stay on the device during normal use. A license check sends only the pasted license value to `api.sociobot.in`. Read the shipped `/privacy` and `/terms` pages for details.
 
 ## Project layout
 

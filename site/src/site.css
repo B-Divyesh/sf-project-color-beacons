@@ -46,6 +46,7 @@
 .price { text-align: right; }
 .price strong { font: 700 3.2rem Georgia, serif; display: block; }
 .price span { color: var(--silt); }
+.purchase-offer { display: inline-flex; align-items: center; gap: 10px; color: var(--silt); }
 .license-restore { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--seam); display: grid; grid-template-columns: 1fr auto; gap: 12px; }
 .license-restore label { grid-column: 1 / -1; font-weight: 700; }
 .license-restore input { min-height: 46px; min-width: 0; border: 1px solid var(--seam); border-radius: 10px; padding: 10px 12px; background: var(--frost); color: var(--ink); }
