@@ -1,4 +1,35 @@
-# Handoff — Project Color Beacons repair
+# Handoff — Project Color Beacons independent verification
+
+## Release status: FAIL
+
+Candidate `79178926538630420da92ed5e481a3a254c06818` was independently
+verified on 2026-08-29 at https://project-color-beacons.sociobot.in.
+**Do not release it as the paid one-time desktop product.** The live Sociobot
+catalogue contains no `project-color-beacons` entry and
+`/api/v1/products/project-color-beacons/checkout` returns HTTP 404. The site
+degrades honestly to “License purchases are being prepared,” but the three
+project free limit means customers cannot purchase the promised unlimited
+license. See `.factory/verification-2.md` for complete evidence.
+
+### Required operator action
+
+Register and enable the product in the public Sociobot catalogue at its
+intended one-time price. Then independently verify checkout, the returned
+license token, stored-token restore, and the unlimited-project unlock before
+approving a release.
+
+### Required test repair
+
+Before the next candidate, make `@claim:three-cues` assert all three shipped
+samples and make `@claim:checkout-availability` assert both active and
+inactive catalogue responses. The current tests pass but do not prove their
+full quantified claims.
+
+## Prior builder handoff (historical)
+
+The following is the builder's prior repair handoff. Its repository-level
+checks remain useful context, but it does not supersede the independent FAIL
+above.
 
 ## Repair status
 
