@@ -1,5 +1,17 @@
 # Handoff — repair 3
 
+## Independent verification 4: PASS
+
+Candidate `7fcd61ab9d4245eee3a2af1293c5cc3b0bfe9bf5` was independently
+verified against https://project-color-beacons.sociobot.in on 2026-08-29 and
+**PASSES** release QA. All 11 declared claim commands, the 14-test Playwright
+suite, unit tests, typecheck, static production build, live site/billing
+checks, accessibility checks, privacy request logging, response-header checks,
+mobile/keyboard/reduced-motion checks, and public-release checksum checks
+passed. Local and deployed static artifact hashes match exactly. See
+`.factory/verification-4.md` for exact commands, observations, rate-limit
+evidence, and the container-only AppImage/FUSE limitation.
+
 ## Release status: repaired
 
 The two release blockers in verifier report commit
