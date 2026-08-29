@@ -55,6 +55,26 @@ try {
   assert.ok(atlasBox && atlasBox.y + atlasBox.height <= 844, 'A complete Atlas API row must fit in the initial mobile viewport');
   await mobile.getByRole('button', { name: 'Check Northwind Store' }).click();
   assert.match(await mobile.locator('#demo-confirmation').innerText(), /Check before editing · Northwind Store/);
+  await mobile.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  await mobile.getByRole('button', { name: 'Confirm Northwind Store' }).click();
+  assert.ok((await mobile.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1);
+  const confirmationBoxes = await mobile.locator('.demo-confirmation > *').evaluateAll((elements) => elements.map((element) => {
+    const box = element.getBoundingClientRect();
+    return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+  }));
+  for (let index = 0; index < confirmationBoxes.length; index += 1) {
+    assert.ok(confirmationBoxes[index].left >= 0 && confirmationBoxes[index].right <= 390);
+    for (let other = index + 1; other < confirmationBoxes.length; other += 1) {
+      const overlaps = confirmationBoxes[index].left < confirmationBoxes[other].right
+        && confirmationBoxes[index].right > confirmationBoxes[other].left
+        && confirmationBoxes[index].top < confirmationBoxes[other].bottom
+        && confirmationBoxes[index].bottom > confirmationBoxes[other].top;
+      assert.equal(overlaps, false, 'Post-confirmation controls must not collide at 390px and 200% text');
+    }
+  }
+  const selectedEditorOutput = await mobile.locator('#config-output').innerText();
+  assert.match(selectedEditorOutput, /\.vscode\/settings\.json/);
+  assert.doesNotMatch(selectedEditorOutput, /\.zed\/settings\.json/);
   assert.ok((await mobile.evaluate(() => localStorage.getItem('demo:pcb:site-state'))) !== null);
   assert.deepEqual([...new Set(demoRequests.map((url) => new URL(url).origin))], [origin]);
 

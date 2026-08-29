@@ -10,7 +10,7 @@ esac
 
 release_json="$(mktemp)"
 checksums="$(mktemp)"
-provenance="$(mktemp)"
+provenance="$(mktemp "${TMPDIR:-/tmp}/project-color-beacons-provenance.XXXXXX.json")"
 trap 'rm -f "$release_json" "$checksums" "$provenance"' EXIT
 curl -fsSL "https://api.github.com/repos/$repo/releases/latest" -o "$release_json"
 grep -q '"body": "Source-signed desktop candidate\.' "$release_json" || {

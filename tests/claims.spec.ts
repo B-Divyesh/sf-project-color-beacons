@@ -269,6 +269,12 @@ test('release workflow does not expose empty Apple credentials to an unsigned bu
   expect(signedStep).toContain('APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}');
 });
 
+test('shell installer saves the portable provenance bundle with a GitHub CLI-supported extension', async () => {
+  const installer = readFileSync('site/public/install.sh', 'utf8');
+  expect(installer).toContain('project-color-beacons-provenance.XXXXXX.json');
+  expect(installer).toContain('gh attestation verify "$destination" --repo "$repo" --bundle "$provenance"');
+});
+
 test('@claim:platform-download resolves only signed matching assets for macOS, Windows, and Linux', async ({ browser }) => {
   const fixtures = [
     { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS', asset: 'Project.Color.Beacons_0.1.2_x64.dmg' },
