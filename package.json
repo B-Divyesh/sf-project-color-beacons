@@ -14,6 +14,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:live:billing": "node scripts/verify-live-billing.mjs",
     "test:live:site": "node scripts/verify-live-site.mjs",
+    "test:release": "node scripts/verify-published-release.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -29,6 +29,7 @@ Checked 2026-08-29 after polish round 2. Hyphenated terms, paths, prices, and ve
 | 7 | pricing | A valid license removes the project limit. |
 | 7 | download state | Signed downloads are not published yet. |
 | 6 | download state | The free browser demo remains available. |
+| 8 | purchase state | License purchases open with a signed desktop build. |
 | 6 | license restore | Paste it to restore this device. |
 | 6 | footer | Mark each project before you edit. |
 
@@ -57,7 +58,7 @@ The demo uses “three beacon cues” for color, name, and symbol. It calls the 
 
 ## README check
 
-Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, signing-gate, reset, and signed-platform-selection statements each have a tagged claim test.
+Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, signing-gate, reset, signed-platform-selection, and checkout-release statements each have a tagged claim test.
 
 ## Terminology
 

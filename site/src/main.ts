@@ -1,6 +1,7 @@
 import './site.css';
 import { SAMPLE_PROJECTS, beaconFor, editorPreview, type Project } from '../../shared/beacons';
 import { displayPrice, registeredBillingProductForCurrentOrigin } from '../../shared/billing';
+import { isInstallableSignedRelease, matchingPlatformAsset, type Release } from '../../shared/release-contract.mjs';
 
 const app = document.getElementById('app');
 if (!app) throw new Error('The site root is missing.');
@@ -89,7 +90,7 @@ function renderRoute(path = location.pathname, focusHeading = false, restoreScro
   document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', description);
   app!.innerHTML = route === '/' ? landing() : route === '/demo' ? demo() : route === '/privacy' ? privacy() : route === '/terms' ? terms() : notFound();
   if (route === '/demo') setupDemo();
-  if (route === '/') { setupDownloads(); setupLicense(); setupPurchaseOffer(); }
+  if (route === '/') { void setupLandingReleaseState(); setupLicense(); }
   const heading = document.querySelector<HTMLElement>('h1');
   heading?.setAttribute('tabindex', '-1');
   if (focusHeading) heading?.focus({ preventScroll: true });
@@ -217,42 +218,52 @@ function handleDemoClick(event: Event) {
   renderDemoState();
 }
 
-async function setupDownloads() {
+async function setupLandingReleaseState() {
+  const release = await setupDownloads();
+  await setupPurchaseOffer(Boolean(release));
+}
+
+async function setupDownloads(): Promise<Release | null> {
   const button = document.getElementById('download-button') as HTMLAnchorElement | null;
   const state = document.getElementById('download-state');
-  if (!button || !state) return;
+  if (!button || !state) return null;
   const platform = /Windows/i.test(navigator.userAgent) ? 'windows' : /Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'macOS' : 'linux';
   const platformLabel = platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux';
   button.textContent = `Checking ${platformLabel} downloads…`;
   try {
     const cache = JSON.parse(localStorage.getItem('pcb:release-cache') ?? '{}') as { at?: number; data?: Release };
-    let release = isSignedRelease(cache.data) ? cache.data : undefined;
+    let release = isInstallableSignedRelease(cache.data) ? cache.data : undefined;
     if (!release || !cache.at || Date.now() - cache.at > 3_600_000) {
       const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', { headers: { Accept: 'application/vnd.github+json' } });
       if (!response.ok) throw new Error('Release not available');
       const releases = await response.json() as Release[];
-      release = releases.find(isSignedRelease);
+      release = releases.find(isInstallableSignedRelease);
       if (!release) throw new Error('Release not available');
       localStorage.setItem('pcb:release-cache', JSON.stringify({ at: Date.now(), data: release }));
     }
-    const pattern = platform === 'windows' ? /\.(msi|exe)$/i : platform === 'macOS' ? /\.(dmg|app\.tar\.gz)$/i : /\.(AppImage|deb)$/i;
-    const asset = release.assets.find((item) => pattern.test(item.name));
-    if (!asset) throw new Error('Platform asset not available');
+    const asset = matchingPlatformAsset(release, platform);
+    if (!asset?.browser_download_url) throw new Error('Platform asset not available');
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
     state.textContent = `${release.tag_name} · ${asset.name} · signed build`;
+    return release;
   } catch {
     button.removeAttribute('href');
     button.setAttribute('aria-disabled', 'true');
     button.textContent = `Signed ${platformLabel} download pending`;
     state.textContent = 'Signed downloads are not published yet. The free browser demo remains available.';
+    return null;
   }
 }
 
-async function setupPurchaseOffer() {
+async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
+  if (!hasInstallableRelease) {
+    offer.textContent = 'License purchases open with a signed desktop build. The free browser demo remains available.';
+    return;
+  }
   try {
     const product = await registeredBillingProductForCurrentOrigin();
     if (!product) throw new Error('Checkout is not registered.');
@@ -260,12 +271,6 @@ async function setupPurchaseOffer() {
   } catch {
     offer.textContent = 'License purchases are being prepared. The free app stores three projects.';
   }
-}
-
-type Release = { tag_name: string; body?: string; draft?: boolean; prerelease?: boolean; assets: Array<{ name: string; browser_download_url: string }> };
-
-function isSignedRelease(release?: Release): release is Release {
-  return Boolean(release && !release.draft && !release.prerelease && /Signed and notarized desktop builds\./i.test(release.body ?? ''));
 }
 
 function setupLicense() {

@@ -122,10 +122,8 @@ try {
   await download.getByText('Signed Linux download pending').waitFor();
   assert.equal(await download.getAttribute('href'), null);
   assert.equal(await download.getAttribute('aria-disabled'), 'true');
-  const checkout = billing.getByRole('link', { name: 'Buy a $24 license' });
-  await checkout.waitFor();
-  assert.equal(await checkout.getAttribute('href'), 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout');
-  assert.match(await billing.locator('#purchase-offer').innerText(), /\$24 one-time · unlimited projects/);
+  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
+  assert.match(await billing.locator('#purchase-offer').innerText(), /License purchases open with a signed desktop build/);
   await billingContext.close();
 
   const returnContext = await browser.newContext();
@@ -137,7 +135,7 @@ try {
   assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, signed-release gate, billing UI, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, signed-release and purchase gates, and license return.');
 } finally {
   await browser.close();
 }

@@ -113,9 +113,9 @@
   },
   {
     "id": "checkout-availability",
-    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout.",
+    "claim": "The site shows a purchase link only when the Sociobot catalogue has an active checkout and a signed desktop release is published.",
     "where": "pricing, terms, README",
     "test": "npm test -- --grep @claim:checkout-availability",
-    "sandbox": "mock mismatched and active matching catalogue responses; assert no checkout in the first state and the exact product link and price in the second"
+    "sandbox": "mock mismatched and active matching catalogue responses with complete signed and unsigned release responses; assert no checkout without both conditions and the exact product link and price only with both"
   }
 ]

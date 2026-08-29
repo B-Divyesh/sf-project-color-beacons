@@ -49,7 +49,13 @@ The release workflow targets these packages when a `v*` tag is pushed. Publicati
 
 The workflow publishes `SHA256SUMS` and `latest.json`. The landing page detects the operating system and resolves a matching signed asset through the GitHub API. It keeps the download unavailable when no signed release exists.
 
-The site offers a package only when its release is marked as signed and notarized. Unsigned releases stay unavailable from the product page.
+The site offers a package and purchase link only when a complete release is marked as signed and notarized. It requires both macOS packages, a Windows package, AppImage and Debian packages, `SHA256SUMS`, and `latest.json`. Unsigned or incomplete releases stay unavailable from the product page.
+
+After publishing a release, run this independent release check. It verifies the release attestation, every required package, the manifest, and checksum agreement with GitHub's recorded artifact digests.
+
+```bash
+npm run test:release
+```
 
 ## Price and privacy
 

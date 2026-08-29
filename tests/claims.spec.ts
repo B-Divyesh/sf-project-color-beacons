@@ -5,8 +5,29 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { isInstallableSignedRelease, signedReleaseIssues, type Release } from '../shared/release-contract.mjs';
 
 const productionOrigin = 'https://project-color-beacons.sociobot.in';
+
+function signedReleaseFixture(overrides: Partial<Release> = {}): Release {
+  const assets = [
+    'Project.Color.Beacons_0.1.2_x64.dmg',
+    'Project.Color.Beacons_0.1.2_aarch64.dmg',
+    'Project.Color.Beacons_0.1.2_x64_en-US.msi',
+    'Project.Color.Beacons_0.1.2_amd64.AppImage',
+    'Project.Color.Beacons_0.1.2_amd64.deb',
+    'SHA256SUMS',
+    'latest.json'
+  ].map((name) => ({ name, browser_download_url: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/download/v0.1.2/${name}` }));
+  return {
+    tag_name: 'v0.1.2',
+    body: 'Signed and notarized desktop builds. Check SHA256SUMS before installing.',
+    draft: false,
+    prerelease: false,
+    assets,
+    ...overrides
+  };
+}
 
 async function serveLocalCandidateAtProductionOrigin(page: Page) {
   await page.route(`${productionOrigin}/**`, async (route) => {
@@ -233,7 +254,7 @@ test('@claim:platform-download resolves only signed matching assets for macOS, W
     { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows', asset: 'Project.Color.Beacons_0.1.2_x64_en-US.msi' },
     { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', label: 'Linux', asset: 'Project.Color.Beacons_0.1.2_amd64.AppImage' }
   ];
-  const release = { tag_name: 'v0.1.2', body: 'Signed and notarized desktop builds. Check SHA256SUMS before installing.', draft: false, prerelease: false, assets: fixtures.map(({ asset }) => ({ name: asset, browser_download_url: `https://github.com/B-Divyesh/sf-project-color-beacons/releases/download/v0.1.2/${asset}` })) };
+  const release = signedReleaseFixture();
 
   for (const fixture of fixtures) {
     const context = await browser.newContext({ userAgent: fixture.userAgent });
@@ -243,7 +264,7 @@ test('@claim:platform-download resolves only signed matching assets for macOS, W
     await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
     await page.goto(`${productionOrigin}/`);
     const download = page.getByRole('link', { name: `Download for ${fixture.label}` });
-    await expect(download).toHaveAttribute('href', release.assets.find(({ name }) => name === fixture.asset)?.browser_download_url ?? '');
+    await expect(download).toHaveAttribute('href', release.assets?.find(({ name }) => name === fixture.asset)?.browser_download_url ?? '');
     await context.close();
   }
 
@@ -259,6 +280,18 @@ test('@claim:platform-download resolves only signed matching assets for macOS, W
   await expect(pending).toHaveAttribute('aria-disabled', 'true');
   await expect(fallbackPage.getByText('Signed downloads are not published yet. The free browser demo remains available.')).toBeVisible();
   await fallbackContext.close();
+});
+
+test('a signed release is not installable until all desktop packages and release metadata are published', async () => {
+  const incomplete = signedReleaseFixture({
+    assets: signedReleaseFixture().assets?.filter((asset) => !['Project.Color.Beacons_0.1.2_aarch64.dmg', 'SHA256SUMS'].includes(asset.name))
+  });
+  expect(isInstallableSignedRelease(incomplete)).toBe(false);
+  expect(signedReleaseIssues(incomplete)).toEqual(expect.arrayContaining([
+    'Missing SHA256SUMS.',
+    expect.stringContaining('aarch64')
+  ]));
+  expect(isInstallableSignedRelease(signedReleaseFixture())).toBe(true);
 });
 
 test('@claim:settings-preserved editor JSON merge keeps unrelated values', async () => {
@@ -306,10 +339,11 @@ test('@claim:license-token-only sends only the pasted license value when verifyi
   await context.close();
 });
 
-test('@claim:checkout-availability shows checkout only for an active matching catalogue entry', async ({ browser }) => {
+test('@claim:checkout-availability shows checkout only for an active matching catalogue entry and installable signed release', async ({ browser }) => {
   const unavailableContext = await browser.newContext();
   const unavailableSite = await unavailableContext.newPage();
   await serveLocalCandidateAtProductionOrigin(unavailableSite);
+  await unavailableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [signedReleaseFixture()] }));
   await unavailableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
     json: { data: [{ slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' }] }
   }));
@@ -321,6 +355,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   const availableSite = await availableContext.newPage();
   await serveLocalCandidateAtProductionOrigin(availableSite);
   const checkoutUrl = 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout';
+  await availableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [signedReleaseFixture()] }));
   await availableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
     json: { data: [
       { slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' },
@@ -331,6 +366,17 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   await expect(availableSite.getByRole('link', { name: 'Buy a $24 license' })).toHaveAttribute('href', checkoutUrl);
   await expect(availableSite.getByText('$24 one-time · unlimited projects')).toBeVisible();
   await expect(availableSite.locator('a[href*="/checkout"]')).toHaveCount(1);
+
+  const unsignedContext = await browser.newContext();
+  const unsignedSite = await unsignedContext.newPage();
+  await serveLocalCandidateAtProductionOrigin(unsignedSite);
+  await unsignedSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [signedReleaseFixture({ body: 'Unsigned desktop builds.' })] }));
+  await unsignedSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [
+    { slug: 'project-color-beacons', checkout_url: checkoutUrl, price_minor: 2400, currency: 'USD' }
+  ] } }));
+  await unsignedSite.goto(`${productionOrigin}/`);
+  await expect(unsignedSite.locator('a[href*="/checkout"]')).toHaveCount(0);
+  await expect(unsignedSite.getByText('License purchases open with a signed desktop build.')).toBeVisible();
 
   const appContext = await browser.newContext();
   await appContext.addInitScript(() => {
@@ -347,6 +393,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   await expect(desktop.locator('a[href*="/checkout"]')).toHaveCount(0);
   await unavailableContext.close();
   await availableContext.close();
+  await unsignedContext.close();
   await appContext.close();
 });
 
