@@ -33,13 +33,18 @@
 .step-number { color: var(--glacial); font-weight: 800; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; }
 .step strong { display: block; color: var(--ink); font: 700 1.28rem Georgia, serif; margin: 4px 0; }
 
-.boundaries { background: var(--ink); color: var(--porcelain); }
+.boundaries {
+  --boundary-accent: #a8e4e9;
+  --boundary-rule: rgb(255 255 255 / 28%);
+  background: var(--ink);
+  color: var(--porcelain);
+}
 .boundaries .shell { display: grid; grid-template-columns: .85fr 1.15fr; gap: 64px; }
 .boundaries h2 { max-width: 10ch; }
-.boundaries .eyebrow { color: #a8e4e9; }
-.boundary-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgb(255 255 255 / 28%); }
-.boundary-list li { padding: 20px 0; border-bottom: 1px solid rgb(255 255 255 / 28%); }
-.boundary-list strong { color: #a8e4e9; }
+.boundaries .eyebrow { color: var(--boundary-accent); }
+.boundary-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--boundary-rule); }
+.boundary-list li { padding: 20px 0; border-bottom: 1px solid var(--boundary-rule); }
+.boundary-list strong { color: var(--boundary-accent); }
 
 .price-slab { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding: 36px; }
 .price-slab h2 { max-width: 14ch; }
@@ -103,16 +108,25 @@
   .demo-intro > .action-note { display: none; }
   .demo-app { margin-top: 16px; padding: 14px; }
   .demo-app > h2 { font-size: 1.55rem; margin-bottom: 12px; }
-  .demo-confirmation { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; min-height: 76px; padding: 10px; margin-bottom: 10px; }
+  .demo-confirmation { grid-template-columns: 40px minmax(0, 1fr) minmax(104px, 38%); gap: 8px; min-height: 76px; padding: 10px; margin-bottom: 10px; }
   .demo-confirmation .beacon, .demo-project .beacon { width: 40px; height: 40px; flex-basis: 40px; }
   .demo-confirmation p { font-size: .82rem; line-height: 1.35; }
-  .demo-confirmation button, .demo-project button { padding-inline: 9px; font-size: .82rem; }
+  .demo-confirmation button, .demo-project button { min-width: 0; width: 100%; padding-inline: 9px; font-size: .82rem; overflow-wrap: anywhere; }
   .config-output { margin-bottom: 10px; padding: 9px 11px; }
   .config-output h3 { font-size: 1.05rem; }
   .config-output p { font-size: .8rem; line-height: 1.35; }
-  .config-output summary { min-height: 36px; font-size: .82rem; }
-  .demo-project { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; padding: 10px; }
+  .config-output summary { min-height: 44px; font-size: .82rem; }
+  .demo-project { grid-template-columns: 40px minmax(0, 1fr) minmax(104px, 38%); gap: 8px; padding: 10px; }
   .demo-project p { font-size: .76rem; }
   .license-restore { grid-template-columns: 1fr; }
   .license-restore label { grid-column: auto; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .boundaries {
+    /* The dark theme inverts this ceramic field to porcelain, so this needs
+       the dark glacial ink token rather than the light-theme aqua accent. */
+    --boundary-accent: #176b78;
+    --boundary-rule: rgb(20 40 45 / 28%);
+  }
 }

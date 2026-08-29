@@ -135,6 +135,12 @@ p, li { max-width: 66ch; }
   color: var(--silt);
 }
 .footer-links { display: flex; flex-wrap: wrap; gap: 16px; justify-content: flex-end; }
+.footer-links a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 .footer-meta { font-size: .875rem; }
 
 .eyebrow {
@@ -192,14 +198,27 @@ p, li { max-width: 66ch; }
   gap: 12px 20px;
   font-size: .9rem;
 }
-.demo-banner button, .demo-banner a { min-height: 36px; padding: 6px 12px; color: #fff; border-color: #a9cfd4; background: transparent; }
+.demo-banner button, .demo-banner a {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: #fff;
+  border-color: #a9cfd4;
+  background: transparent;
+}
 
 @media (max-width: 680px) {
   .shell { width: min(100% - 28px, 1180px); }
-  .site-header { align-items: flex-start; padding-block: 12px; }
-  .site-nav { gap: 8px; }
+  .site-header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-block: 12px;
+  }
+  .site-nav { flex: 1 1 180px; min-width: 0; gap: 8px; flex-wrap: wrap; }
   .site-nav a { font-size: .9rem; padding-inline: 4px; }
-  .wordmark span { max-width: 96px; line-height: 1.05; }
+  .wordmark { gap: 6px; }
+  .wordmark span { max-width: 86px; line-height: 1.05; }
   .site-footer { grid-template-columns: 1fr; }
   .footer-links { justify-content: flex-start; }
 }

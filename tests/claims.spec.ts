@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { isInstallableSignedRelease, signedReleaseIssues, type Release } from '../shared/release-contract.mjs';
 
 const productionOrigin = 'https://project-color-beacons.sociobot.in';
@@ -36,6 +36,13 @@ async function serveLocalCandidateAtProductionOrigin(page: Page) {
     const response = await route.fetch({ url: localUrl });
     await route.fulfill({ response });
   });
+}
+
+async function expectMinimumTouchTarget(locator: Locator) {
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+  expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
 }
 
 test('@claim:three-cues every sample project has a color, name, and symbol', async ({ page }) => {
@@ -418,6 +425,15 @@ test('routes have accessible structure, complete metadata, and no Axe findings',
   }
 });
 
+test('dark landing page has no Axe violations, including the privacy boundaries', async ({ browser }) => {
+  const context = await browser.newContext({ colorScheme: 'dark' });
+  const page = await context.newPage();
+  await page.goto('/');
+  const results = await new AxeBuilder({ page: page as never }).analyze();
+  expect(results.violations).toEqual([]);
+  await context.close();
+});
+
 test('landing fits a 390 pixel screen and its first action works', async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto('http://127.0.0.1:4173/');
@@ -482,6 +498,37 @@ test('desktop interface fits its 390 pixel minimum window', async ({ browser }) 
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   await expect(page.locator('#confirmation-area')).toContainText('Atlas API');
   await page.close();
+});
+
+test('site demo and desktop UI reflow at 390 pixels with 200 percent text', async ({ browser }) => {
+  const cases = [
+    { url: 'http://127.0.0.1:4173/demo', expected: 'Completed sample and projects' },
+    { url: 'http://127.0.0.1:1420/?demo=1', expected: 'Project beacons' }
+  ];
+  for (const item of cases) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.goto(item.url);
+    await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(page.getByText(item.expected, { exact: true })).toBeVisible();
+    await page.close();
+  }
+});
+
+test('mobile demo, settings, and footer controls have 44 pixel targets', async ({ browser }) => {
+  const site = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await site.goto('http://127.0.0.1:4173/demo');
+  await expectMinimumTouchTarget(site.getByRole('button', { name: 'Reset demo' }));
+  await expectMinimumTouchTarget(site.getByRole('link', { name: 'Start for real' }));
+  await expectMinimumTouchTarget(site.getByText('View settings', { exact: true }));
+  for (const footerLink of await site.locator('.site-footer a').all()) await expectMinimumTouchTarget(footerLink);
+  await site.close();
+
+  const desktop = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await desktop.goto('http://127.0.0.1:1420/?demo=1');
+  await expectMinimumTouchTarget(desktop.getByRole('button', { name: 'Reset demo' }));
+  await expectMinimumTouchTarget(desktop.getByRole('link', { name: 'Start for real' }));
+  await desktop.close();
 });
 
 test('desktop interface demo is keyboard-ready and accessible', async ({ browser }) => {
