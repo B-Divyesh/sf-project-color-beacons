@@ -84,6 +84,10 @@ try {
   const billingContext = await browser.newContext();
   const billing = await billingContext.newPage();
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
+  const download = billing.getByRole('link', { name: 'Download for Linux' });
+  await download.waitFor();
+  assert.match(await download.getAttribute('href') ?? '', /\/releases\/download\/v0\.1\.1\/.*\.(AppImage|deb)$/);
+  assert.match(await billing.locator('#download-state').innerText(), /^v0\.1\.1 · /);
   const checkout = billing.getByRole('link', { name: 'Buy a $24 license' });
   await checkout.waitFor();
   assert.equal(await checkout.getAttribute('href'), 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout');
@@ -99,7 +103,7 @@ try {
   assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, privacy, demo disposal, offline update, billing UI, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, privacy, demo disposal, offline update, v0.1.1 download, billing UI, and license return.');
 } finally {
   await browser.close();
 }
