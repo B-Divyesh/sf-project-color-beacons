@@ -12,6 +12,7 @@
     "tauri": "tauri",
     "test": "playwright test",
     "test:unit": "vitest run --config vitest.config.ts",
+    "test:live:billing": "node scripts/verify-live-billing.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

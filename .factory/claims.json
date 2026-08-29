@@ -21,6 +21,13 @@
     "sandbox": "fresh browser context; exercise the demo, inspect storage keys, and intercept every request"
   },
   {
+    "id": "demo-disposal",
+    "claim": "Start for real discards the isolated sample workspace.",
+    "where": "demo banner, privacy page, demo contract",
+    "test": "npm test -- --grep @claim:demo-disposal",
+    "sandbox": "fresh site and desktop-demo browser contexts; select Northwind Store, leave the demo, assert the demo key is gone, and reopen the site demo in its initial state"
+  },
+  {
     "id": "offline-reload",
     "claim": "The demo reloads offline after its first visit.",
     "where": "landing facts, README, demo contract",

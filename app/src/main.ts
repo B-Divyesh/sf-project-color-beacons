@@ -236,7 +236,7 @@ function removeProject(id: string) {
 
 function installDemoBanner() {
   if (!demoMode) return;
-  required<HTMLElement>('demo-banner').innerHTML = `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-action="reset-demo">Reset demo</button><a href="/">Start for real</a></div>`;
+  required<HTMLElement>('demo-banner').innerHTML = `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-action="reset-demo">Reset demo</button><a href="/" data-action="exit-demo">Start for real</a></div>`;
 }
 
 document.addEventListener('click', (event) => {
@@ -257,6 +257,7 @@ document.addEventListener('click', (event) => {
   if (action === 'remove' && id) removeProject(id);
   if (action === 'undo' && removedProject) { projects.push(removedProject); removedProject = null; saveProjects(); render(); setStatus('Project restored.'); }
   if (action === 'reset-demo') { localStorage.removeItem(storageKey); projects = structuredClone(SAMPLE_PROJECTS); saveProjects(); activeId = null; confirmedId = null; render(); setStatus('Demo reset to its sample projects.'); }
+  if (action === 'exit-demo') localStorage.removeItem(storageKey);
 });
 
 required<HTMLButtonElement>('add-project').addEventListener('click', openProjectDialog);

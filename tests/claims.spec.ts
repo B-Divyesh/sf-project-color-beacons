@@ -59,6 +59,33 @@ test('@claim:demo-isolated demo uses no real project storage or outside requests
   expect(outsideRequests).toEqual([]);
 });
 
+test('@claim:demo-disposal Start for real discards both sample workspaces', async ({ browser }) => {
+  const siteContext = await browser.newContext();
+  const site = await siteContext.newPage();
+  await site.goto('http://127.0.0.1:4173/demo');
+  await site.locator('.demo-project').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await expect(site.locator('#demo-confirmation')).toContainText('Check before editing · Northwind Store');
+  await expect.poll(() => site.evaluate(() => localStorage.getItem('demo:pcb:site-state'))).not.toBeNull();
+  await site.getByRole('link', { name: 'Start for real' }).click();
+  await expect(site).toHaveURL('http://127.0.0.1:4173/#download');
+  expect(await site.evaluate(() => localStorage.getItem('demo:pcb:site-state'))).toBeNull();
+  await site.goto('http://127.0.0.1:4173/demo');
+  await expect(site.locator('#demo-confirmation')).toContainText('Choose “Check project” to fill this strip.');
+  await expect(site.locator('#demo-confirmation')).not.toContainText('Northwind Store');
+  await siteContext.close();
+
+  const desktopContext = await browser.newContext();
+  const desktop = await desktopContext.newPage();
+  await desktop.goto('http://127.0.0.1:1420/?demo=1');
+  await desktop.locator('.project-card').filter({ hasText: 'Northwind Store' }).getByRole('button', { name: 'Check project' }).click();
+  await expect(desktop.getByRole('button', { name: 'Confirm Northwind Store' })).toBeVisible();
+  expect(await desktop.evaluate(() => localStorage.getItem('demo:pcb:projects'))).not.toBeNull();
+  await desktop.getByRole('link', { name: 'Start for real' }).click();
+  await expect(desktop).toHaveURL('http://127.0.0.1:1420/');
+  expect(await desktop.evaluate(() => localStorage.getItem('demo:pcb:projects'))).toBeNull();
+  await desktopContext.close();
+});
+
 test('@claim:offline-reload demo reloads offline after its first visit', async ({ page, context }) => {
   await page.goto('/demo');
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });

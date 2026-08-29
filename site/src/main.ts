@@ -57,7 +57,7 @@ function productPreview() {
 }
 
 function demo() {
-  return `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-demo-action="reset">Reset demo</button><a href="/#download">Start for real</a></div>${header()}<main id="main" class="demo-main shell" tabindex="-1"><div class="demo-intro"><div><p class="eyebrow">Safe sample workspace</p><h1>Check a project before you edit.</h1><p class="lede">Choose one sample project. Its name, symbol, color, and path move into the confirmation strip.</p></div><p class="action-note">Demo changes use the <code>demo:</code> storage space only.</p></div><section class="demo-app ceramic-panel" aria-labelledby="sample-projects-title"><h2 id="sample-projects-title">Sample projects</h2><div id="demo-confirmation" class="demo-confirmation"><span aria-hidden="true">◇</span><p>Choose “Check project” to fill this strip.</p></div><div id="demo-project-list" class="demo-project-list"></div><p class="demo-status" id="demo-status" role="status"></p><div id="config-output"></div></section></main>${footer()}`;
+  return `<div class="demo-banner"><strong>Demo — sample data, nothing is saved</strong><button type="button" data-demo-action="reset">Reset demo</button><a href="/#download" data-demo-action="exit">Start for real</a></div>${header()}<main id="main" class="demo-main shell" tabindex="-1"><div class="demo-intro"><div><p class="eyebrow">Safe sample workspace</p><h1>Check a project before you edit.</h1><p class="lede">Choose one sample project. Its name, symbol, color, and path move into the confirmation strip.</p></div><p class="action-note">Demo changes use the <code>demo:</code> storage space only.</p></div><section class="demo-app ceramic-panel" aria-labelledby="sample-projects-title"><h2 id="sample-projects-title">Sample projects</h2><div id="demo-confirmation" class="demo-confirmation"><span aria-hidden="true">◇</span><p>Choose “Check project” to fill this strip.</p></div><div id="demo-project-list" class="demo-project-list"></div><p class="demo-status" id="demo-status" role="status"></p><div id="config-output"></div></section></main>${footer()}`;
 }
 
 function privacy() {
@@ -146,6 +146,10 @@ function handleDemoClick(event: Event) {
   const id = target.dataset.id;
   const status = document.getElementById('demo-status');
   const output = document.getElementById('config-output');
+  if (action === 'exit') {
+    localStorage.removeItem(demoKey);
+    return;
+  }
   if (action === 'reset') {
     demoState = initialDemoState();
     localStorage.setItem(demoKey, JSON.stringify(demoState));

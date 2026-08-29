@@ -18,6 +18,6 @@ Choose **Check project**, compare the four cues, then choose the named **Confirm
 
 The browser demo writes only to `localStorage` key `demo:pcb:site-state`. The desktop-shaped demo at `?demo=1` uses `demo:pcb:projects`. Neither mode reads or writes the real `pcb:projects` key.
 
-The persistent demo banner names the sandbox. **Reset demo** deletes changes and restores the three samples. **Start for real** leaves the sandbox and opens the desktop download section.
+The persistent demo banner names the sandbox. **Reset demo** deletes changes and restores the three samples. **Start for real** deletes the demo storage key before leaving the sandbox. On the web demo it then opens the desktop download section.
 
 The sample data and application shell are precached. After the first visit, the demo can be reloaded without a network connection.
