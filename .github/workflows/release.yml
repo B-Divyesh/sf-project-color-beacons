@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   build:
+    env:
+      APPLE_SIGNING_CONFIGURED: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_SIGNING_IDENTITY != '' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +65,24 @@ jobs:
           $config.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name timestampUrl -Value 'http://timestamp.digicert.com'
           $config | ConvertTo-Json -Depth 20 | Set-Content $configPath
           Remove-Item $pfxPath
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build unsigned or non-macOS package
+        if: matrix.platform != 'macos-latest' || env.APPLE_SIGNING_CONFIGURED != 'true'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Project Color Beacons ${{ github.ref_name }}
+          releaseBody: |
+            Source-signed desktop candidate. GitHub build provenance ties every package to this repository, workflow, commit, and tag.
+
+            Verify a downloaded package with `gh attestation verify <file> --repo B-Divyesh/sf-project-color-beacons`, then compare SHA256SUMS. The macOS and Windows packages are not notarized or trust-store signed unless their optional repository credentials were configured for this run.
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.target }}
+      - name: Build signed and notarized macOS package
+        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING_CONFIGURED == 'true'
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}

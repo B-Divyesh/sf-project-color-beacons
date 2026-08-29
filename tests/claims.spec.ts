@@ -252,6 +252,23 @@ test('@claim:release-matrix release workflow targets macOS, Windows, and Linux p
   expect(workflow).toContain('tauri-apps/tauri-action@v0');
 });
 
+test('release workflow does not expose empty Apple credentials to an unsigned build', async () => {
+  const workflow = readFileSync('.github/workflows/release.yml', 'utf8');
+  const unsignedStep = workflow.slice(
+    workflow.indexOf('- name: Build unsigned or non-macOS package'),
+    workflow.indexOf('- name: Build signed and notarized macOS package'),
+  );
+  const signedStep = workflow.slice(
+    workflow.indexOf('- name: Build signed and notarized macOS package'),
+    workflow.indexOf('\n  finish:'),
+  );
+
+  expect(unsignedStep).toContain("env.APPLE_SIGNING_CONFIGURED != 'true'");
+  expect(unsignedStep).not.toContain('APPLE_CERTIFICATE:');
+  expect(signedStep).toContain("env.APPLE_SIGNING_CONFIGURED == 'true'");
+  expect(signedStep).toContain('APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}');
+});
+
 test('@claim:platform-download resolves only signed matching assets for macOS, Windows, and Linux', async ({ browser }) => {
   const fixtures = [
     { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS', asset: 'Project.Color.Beacons_0.1.2_x64.dmg' },
