@@ -1,94 +1,117 @@
-# Handoff — Project Color Beacons independent verification
+# Handoff — Project Color Beacons repair 2
 
-## Release status: FAIL
+## Release status
 
-Candidate `79178926538630420da92ed5e481a3a254c06818` was independently
-verified on 2026-08-29 at https://project-color-beacons.sociobot.in.
-**Do not release it as the paid one-time desktop product.** The live Sociobot
-catalogue contains no `project-color-beacons` entry and
-`/api/v1/products/project-color-beacons/checkout` returns HTTP 404. The site
-degrades honestly to “License purchases are being prepared,” but the three
-project free limit means customers cannot purchase the promised unlimited
-license. See `.factory/verification-2.md` for complete evidence.
+Repository repair candidate `884fe95` is built, pushed to `main`, and deployed
+to https://project-color-beacons.sociobot.in on 29 August 2026. The two
+claim-test defects reported in `.factory/verification-2.md` are fixed and all
+local, package, browser, accessibility, privacy, offline, response-policy, and
+live identity checks pass.
 
-### Required operator action
+The release still needs one external operator action before it can be approved
+as a paid product: the public Sociobot catalogue has no
+`project-color-beacons` entry, so the production checkout endpoint still
+returns HTTP 404. Repository instructions prohibit changing billing
+infrastructure from this repo, and the approved `fleet/new-paid-product.sh`
+registration helper is not available in this worker. The product continues to
+show its honest unavailable state and never exposes a dead checkout link.
 
-Register and enable the product in the public Sociobot catalogue at its
-intended one-time price. Then independently verify checkout, the returned
-license token, stored-token restore, and the unlimited-project unlock before
-approving a release.
+## Repairs
 
-### Required test repair
+- `@claim:three-cues` now checks Atlas API, Northwind Store, and Launch Docs.
+  For every sample it asserts the written name plus the named color and symbol
+  in both the project card and the confirmation strip.
+- `@claim:checkout-availability` now serves the local candidate under the real
+  HTTPS production origin. It proves both catalogue branches: a missing or
+  mismatched entry renders no checkout link, while an active matching entry
+  renders exactly the Sociobot `$24` checkout URL and one-time price.
+- `.factory/claims.json` now documents both checkout test states.
+- The Rust core was mechanically formatted so `cargo fmt --check` is a clean
+  release gate. No product behavior changed.
 
-Before the next candidate, make `@claim:three-cues` assert all three shipped
-samples and make `@claim:checkout-availability` assert both active and
-inactive catalogue responses. The current tests pass but do not prove their
-full quantified claims.
+## Clean verification evidence
 
-## Prior builder handoff (historical)
-
-The following is the builder's prior repair handoff. Its repository-level
-checks remain useful context, but it does not supersede the independent FAIL
-above.
-
-## Repair status
-
-The independent-verification blockers from commit `fd004980bc77d01c8b79b0bd24a28bc8260aabe6` are repaired in this handoff commit.
-
-- The site never exposes the product-specific Sociobot checkout URL until the public Sociobot catalogue confirms an active `project-color-beacons` entry. The live endpoint currently returns 404, so the deployed site says that purchases are being prepared instead of offering a dead $24 purchase. Existing license restore and verification remain available. The desktop dialog sends people to the site’s availability check rather than a checkout URL that may be dead.
-- `npm run test:unit` now runs only `tests/unit/**/*.test.ts`; Playwright runs only `tests/**/*.spec.ts`. This fixes the Vitest/Playwright runner collision in both directions.
-- Content-hashed `/assets/*` now has `Cache-Control: public, max-age=31536000, immutable` in `staticwebapp.config.json`.
-- Published copy is aligned with tested claims. Added claim coverage proves supported editor settings, normal project-use data locality, license request contents, and the checkout availability guard. The untestable desktop-offline and telemetry/monitoring marketing promises were removed; the existing local-first behavior was not changed.
-
-## How to run
-
-```bash
-npm ci
-npm run dev:site
-npm run dev
-npm run tauri dev
-```
-
-The safe browser demo is `/demo`. It uses only `demo:pcb:site-state`; the desktop-shaped demo uses `demo:pcb:projects`.
-
-## Verification evidence (2026-08-29)
-
-From a clean `npm ci` install:
-
-- `npm run typecheck` — passed.
-- `npm run test:unit` — passed: 4 tests. It confirms the runner separation, immutable-asset rule, and catalogue filtering.
-- `npm test` — passed: 13 Playwright tests, including all 10 exact commands in `.factory/claims.json`, desktop keyboard use, 390 px mobile width, offline demo reload, console errors, and Axe serious/critical checks on all routes.
-- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — passed: 2 tests, including the new VS Code/Cursor/Zed merge fixture.
-- `npm run build` — passed; generated `dist/app` and `dist/site`. Site entry JS is 6.87 KB gzip and CSS is 3.39 KB gzip.
-- `npm audit --audit-level=high` — 0 vulnerabilities.
-- `cargo check --manifest-path src-tauri/Cargo.toml` cannot run in this worker image because `pkg-config` cannot find `glib-2.0`. This is the same host dependency recorded by the independent verifier; it does not affect the no-desktop Rust core tests or the GitHub Actions packaging matrix, which installs Linux desktop libraries.
-
-## Live deployment evidence
-
-Deployed to `https://project-color-beacons.sociobot.in` on 2026-08-29 from repair commit `5c51282e8881f7d262fe2a050029a7405a3671f7`.
-
-- `/opt/fleet/lib/verify-url.sh` passed: HTTP 200, 828 ms load, correct title and language, one `h1`, one `main`, no missing image alt text, no unlabeled buttons, and no console errors.
-- Live desktop checks on `/`, `/demo`, `/privacy`, `/terms`, and an unknown route found no console/page errors and no Axe serious/critical violations. The unavailable-purchase state is visible and no `/checkout` link is present while the catalogue has no matching product.
-- Live 390 × 844 check had 0 px horizontal overflow; Enter on the sample action navigated to `/demo`.
-- Local and deployed SHA-256 values match for `index.html`, the deployed JS, and CSS assets.
-- Both deployed hashed assets return `Cache-Control: public, max-age=31536000, immutable`.
-- Lighthouse 12.8.2 live run: Performance 100, Accessibility 100, Best Practices 100, SEO 100, LCP 857 ms, CLS 0.
-
-## Deployment
-
-Deploy with the work-order command:
+The work-order deployment command was run verbatim after the repair:
 
 ```bash
 npm ci && npm test && npm run build:site
 ```
 
-Deploy `dist/site` as the static output. The Tauri app and the tag-triggered GitHub Actions release workflow remain unchanged.
+It passed with 13/13 Playwright tests and produced `dist/site`. Every one of
+the ten commands in `.factory/claims.json` was also run separately and passed.
 
-## Remaining operator action
+Additional gates:
 
-The Sociobot billing product is not yet registered in the public catalogue. Once the factory enables `project-color-beacons` at the intended one-time price, the existing production site will show its checkout link automatically. No repository secret, payment-provider integration, or direct billing change is required.
+- `npm run test:unit` — 4/4 Vitest tests passed.
+- `npm run typecheck` — passed. The repository has no separate JavaScript lint
+  command.
+- `npm run build` — passed for `dist/app` and `dist/site`.
+- `npm audit --audit-level=high` — 0 vulnerabilities.
+- `cargo fmt --manifest-path src-tauri/Cargo.toml --check` — passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` —
+  2/2 tests passed.
+- `cargo check --manifest-path src-tauri/Cargo.toml` — passed after installing
+  the same Linux Tauri prerequisites used by the release workflow.
+- `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`
+  — passed.
+- A native release build produced a 1,921,740-byte Debian package and a
+  76,663,288-byte AppImage. Debian metadata is
+  `project-color-beacons 0.1.0 amd64`.
 
-Desktop packages remain unsigned until platform signing credentials are supplied:
+Static budgets remain well inside the product limits: site JS is 19,544 bytes
+(6.87 KB gzip), CSS is 11,149 bytes (3.39 KB gzip), and the mobile hero is
+12,684 bytes.
 
-- `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID`
-- `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD`
+## Live deployment evidence
+
+Azure Static Web Apps deployment
+`b9844f73-7577-4bb8-a481-aca3768c7a53` succeeded. The custom domain returned
+HTTP 200 immediately after deployment.
+
+- `/opt/fleet/lib/verify-url.sh` passed in 781 ms with the correct title and
+  language, one `h1`, one `main`, complete image alt text, labelled buttons,
+  and no console errors.
+- `/`, `/demo`, `/privacy`, `/terms`, and an unknown route each returned 200,
+  had route-correct titles, one `h1`, one `main`, no console/page errors, and
+  no serious or critical Axe findings.
+- At 390 × 844, horizontal overflow was 0 px and keyboard Enter on the primary
+  sample action opened `/demo`. The live demo focus ring is a 3 px solid
+  `rgb(214, 111, 53)` outline.
+- The service worker update completed. After an online visit, `/demo` reloaded
+  offline with its heading and sample data and no console errors.
+- The live demo requested only its own origin and stored only
+  `demo:pcb:site-state`.
+- Local and live SHA-256 values match for `index.html`, the hashed JavaScript,
+  and the hashed CSS. Hashed assets return
+  `Cache-Control: public, max-age=31536000, immutable`.
+- The live response includes HSTS, `nosniff`, the expected referrer and
+  permissions policies, and the restrictive CSP with only GitHub API and
+  Sociobot API connect origins.
+- Lighthouse 12.8.2: Performance 100, Accessibility 100, Best Practices 100,
+  SEO 100, LCP 1,613 ms, total blocking time 23 ms, CLS 0.
+- Published release `v0.1.0` remains non-draft and contains macOS arm64/x64,
+  Windows MSI/exe, Linux AppImage/deb/rpm, `SHA256SUMS`, and `latest.json`.
+  A fresh Debian download matched its published SHA-256 exactly and reported
+  package `project-color-beacons`, version `0.1.0`, architecture `amd64`.
+
+## Live billing result and required operator action
+
+Read-only production checks after deployment still return:
+
+```text
+GET https://api.sociobot.in/api/v1/products
+matching project-color-beacons entries: 0
+
+GET https://api.sociobot.in/api/v1/products/project-color-beacons/checkout
+HTTP 404
+{"error":"enabled factory product","status":404}
+```
+
+An operator must register and enable `project-color-beacons` in the public
+Sociobot catalogue at the intended `$24` one-time price using the factory's
+approved billing workflow. Then verify a real checkout, returned-license URL
+storage, license restore, and unlimited-project activation. Do not replace the
+Sociobot checkout with a direct payment-provider integration.
+
+Desktop packages remain unsigned until the operator supplies the signing
+credentials already documented by the release workflow.
