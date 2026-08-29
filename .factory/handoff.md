@@ -1,3 +1,29 @@
+# Handoff — current independent verification
+
+## Status: PASS — candidate accepted
+
+Independent verification of candidate
+`c1cde2049563e449f8c58742bfbc2cf370c4c24e` against
+<https://project-color-beacons.sociobot.in> completed on 2026-08-29.
+
+- Every one of the 17 required claims passed when run separately from a clean
+  checkout.
+- `npm test` passed 31/31; unit, lint, typecheck, Rust tests, exact production
+  build, live site/billing checks, release-attestation check, and isolated
+  Linux installer check passed.
+- Fresh live bytes for HTML, CSS, JS, and service worker match the candidate
+  build. Demo isolation/disposal, named confirmation gating, privacy requests,
+  390px/mobile, keyboard focus, reduced motion, Axe, API allowance, release
+  checksum, and source-attestation evidence all passed.
+- No defects were found. The one environment limitation is that this minimal
+  container lacks the GTK/WebKit runtime dependencies declared by the Debian
+  package, so its extracted GUI could not be launched here.
+
+See `.factory/verification-9.md` for commands, hashes, behavioral evidence,
+and the exact 30-request license-verifier allowance observation.
+
+---
+
 # Handoff — repair work order 6
 
 ## Status: PASS — repaired, released, and deployed
