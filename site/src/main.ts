@@ -225,7 +225,8 @@ function handleDemoClick(event: Event) {
     const details = document.querySelector<HTMLDetailsElement>('#config-output details');
     details?.setAttribute('open', '');
     details?.querySelector<HTMLElement>('summary')?.focus();
-    details?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    details?.scrollIntoView({ behavior, block: 'nearest' });
     if (status) status.textContent = 'The confirmed editor settings are open.';
     return;
   }
