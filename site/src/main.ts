@@ -79,7 +79,7 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and an installable package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a source-verified package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -268,7 +268,13 @@ async function setupDownloads(): Promise<Release | null> {
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${platform === 'windows' ? ' · Authenticode verified' : platform === 'macOS' ? ' · Apple signed and notarized' : ''}`;
+    const unsigned = platform === 'windows'
+      ? release.body?.includes('Windows Authenticode check: unavailable.')
+      : platform === 'macOS' ? release.body?.includes('macOS signing and notarization check: unavailable.') : false;
+    const operatingSystemTrust = unsigned
+      ? ' · unsigned; your system may show a warning'
+      : platform === 'windows' ? ' · Authenticode verified' : platform === 'macOS' ? ' · Apple signed and notarized' : '';
+    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${operatingSystemTrust}`;
     return release;
   } catch {
     button.removeAttribute('href');
@@ -283,7 +289,7 @@ async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
   if (!hasInstallableRelease) {
-    offer.textContent = 'License purchases open with an installable package for this platform. The free browser demo remains available.';
+    offer.textContent = 'License purchases open with a verified package for this platform. The free browser demo remains available.';
     return;
   }
   try {

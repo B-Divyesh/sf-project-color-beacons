@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-30 for polish round 4. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-30 for repair 10. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -29,9 +29,10 @@ Checked 2026-08-30 for polish round 4. Hyphenated terms, paths, prices, and vers
 | 7 | pricing | A valid license removes the project limit. |
 | 8 | download state | A verified [platform] download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 10 | trusted Windows state pattern | v0.1.5 · [package filename] · verified package origin · Authenticode verified. |
-| 12 | trusted macOS state pattern | v0.1.5 · [package filename] · verified package origin · Apple signed and notarized. |
-| 10 | purchase state | License purchases open with an installable package for this platform. |
+| 12 | unsigned desktop state pattern | v0.1.6 · [package filename] · verified package origin · unsigned; your system may show a warning. |
+| 10 | trusted Windows state pattern | v0.1.6 · [package filename] · verified package origin · Authenticode verified. |
+| 12 | trusted macOS state pattern | v0.1.6 · [package filename] · verified package origin · Apple signed and notarized. |
+| 10 | purchase state | License purchases open with a verified package for this platform. |
 | 4 | purchase detail | $24 one-time · unlimited projects. |
 | 5 | purchase state | License purchases are being prepared. |
 | 6 | purchase state | The free app stores three projects. |
@@ -74,7 +75,7 @@ Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent f
 
 The release status uses “verified package origin” for GitHub provenance. It reserves “signed” and “notarized” for operating-system trust checks.
 
-The README states that every platform needs a complete release with verified GitHub provenance. It says Windows needs Authenticode verification and macOS needs Apple signing and notarization.
+The README states that every platform needs a complete release with verified GitHub provenance. It explains operating-system warnings when owner certificates are unavailable.
 
 The README uses “browser-accessible API” instead of browser-security jargon. It directs license holders to the desktop app and makes no website restoration promise.
 

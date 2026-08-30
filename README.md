@@ -53,9 +53,9 @@ GitHub records the repository, workflow, commit, tag, and checksum for every pac
 
 The landing page detects the operating system and reads release details from GitHub's browser-accessible API.
 
-Every platform requires verified GitHub provenance and a complete release before its download appears. Windows also requires Authenticode verification. macOS requires Apple signing and notarization.
+Every platform requires verified GitHub provenance and a complete release before its download appears.
 
-Unsigned Windows and macOS packages stay unavailable. Their purchase links also stay hidden until the required trust checks pass.
+The release records missing owner certificates honestly. Unsigned Windows and macOS packages remain available with an operating-system warning.
 
 After publishing a release, run these independent checks. The first checks release files, checksums, the manifest, and GitHub's package-origin record.
 
@@ -74,7 +74,7 @@ Color, name, symbol, and confirmation are free for up to three projects. A valid
 
 To restore a purchase, open the desktop app, choose **License**, and paste the key from your receipt.
 
-The site shows a purchase link only when checkout is active and an installable package exists for the visitor's platform.
+The site shows a purchase link only when checkout is active and a source-verified package exists for the visitor's platform.
 
 Project names, local paths, and settings stay on the device during normal use. A license check sends only the pasted license value to `api.sociobot.in`. Read the shipped `/privacy` and `/terms` pages for details.
 

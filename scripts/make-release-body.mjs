@@ -15,7 +15,7 @@ macOS source provenance check: passed.
 Windows Authenticode check: ${windowsVerified ? 'passed' : 'unavailable'}.
 macOS signing and notarization check: ${macOSVerified ? 'passed' : 'unavailable'}.
 
-See platform-signatures.json for the machine-readable results. Unsigned Windows and macOS packages are never published as installable downloads.
+See platform-signatures.json for the machine-readable results. Unsigned packages remain available with an operating-system warning.
 `;
 
 await writeFile(outputPath, body);

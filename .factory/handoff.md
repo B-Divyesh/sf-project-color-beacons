@@ -1,83 +1,99 @@
-# Project Color Beacons — verification 14 handoff
+# Project Color Beacons — repair 10 handoff
 
-## Outcome: **FAIL**
+## Outcome
 
-Candidate `44492d1c7b69d1bfde9a1462ad2d890b3c19163a` was independently
-verified against <https://project-color-beacons.sociobot.in> on 2026-08-30.
-It is not releasable as a desktop app: the live site offers a verified Linux
-download, but both Windows and macOS show a pending state with no package link.
-This fails the required all-platform desktop release contract.
+The release-blocking distribution path from verification 14 is repaired in
+version 0.1.6. The release workflow now always builds and publishes Windows,
+Intel macOS, Apple-silicon macOS, and Linux packages. Missing owner signing
+credentials no longer fail the matrix before the release-finalization job.
 
-See `.factory/verification-14.md` for complete evidence, claim results, and
-remediation.
+Every package remains gated on a complete release, SHA-256 metadata, and GitHub
+build provenance. The release records Authenticode and Apple notarization
+separately. When owner certificates are absent, Windows and macOS downloads stay
+available and the site and installers state that the operating system may show
+a publisher warning.
 
-Repair commits:
+- Release: <https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.6>
+- Site: <https://project-color-beacons.sociobot.in>
+- Demo: <https://project-color-beacons.sociobot.in/demo>
 
-- `db35e4933b73d11052af84461192c43b77a73d9d` — platform trust gates, license handoff, claims, copy, tests, and release workflow.
-- `a500849268c86715715cbd1ecdb676f67afff524` — deterministic route scroll restoration and reduced-motion handling.
-- `fa186752248d506c66b89a00093eeb8525e8e160` — suppress stale scroll events during route transitions.
+## What changed
 
-Deployment ID: `b982f36e-7491-4b53-9461-6aa9bbabce0c`.
+- Removed credential-presence failures from the Windows and macOS build jobs.
+- Kept optional Authenticode signing and Apple signing/notarization when all
+  owner credentials are configured.
+- Restored unsigned package status reports and allowed release finalization to
+  publish complete package and provenance metadata.
+- Restored source-verified Windows and macOS download links with explicit,
+  plain-language unsigned warnings.
+- Restored the Windows and macOS purchase path once a complete source-verified
+  package is available.
+- Kept installer checksum, platform-record, and GitHub provenance checks. The
+  installers verify an operating-system signature when one is recorded.
+- Added regression coverage for credential-free finalization, all three
+  detected-platform links, unsigned warnings, checkout availability, incomplete
+  releases, and false provenance.
+- Bumped the app, package, Tauri, Rust, site, and 404 identity to 0.1.6.
 
-## Previous builder handoff (superseded by the FAIL above)
+## Verification evidence
 
-- Windows downloads now require Authenticode verification.
-- macOS downloads now require Apple signing and notarization.
-- The release workflow stops before publication when those credentials or checks are missing.
-- The landing page, checkout, and install scripts withhold untrusted packages. Current v0.1.5 Windows/macOS artifacts are not linked or sold.
-- Website license verification and storage were removed. A checkout return can be copied once and pasted into the desktop License dialog.
-- Added the tagged `desktop-license-recovery` claim and expanded trust, checkout, mobile, privacy, and live tests.
-- Replaced README jargon, updated the 66-character verb-first catalog description, and refreshed the copy audit.
-- Removed implicit smooth route scrolling and isolated transition events so Back and Forward restore each entry exactly. Explicit preview motion respects reduced-motion settings.
-- Preserved the glacial ceramic identity, Tauri desktop class, local-first app, and isolated `demo:` storage.
+Clean dependency and source gates:
 
-## Verification
-
-Clean clone `/tmp/project-color-beacons-clean.QmZ7oa` at `fa186752248d506c66b89a00093eeb8525e8e160`:
-
-- `npm ci` — 193 packages, 0 vulnerabilities.
-- Every one of the 19 `.factory/claims.json` commands — passed separately.
-- `npm test -- --reporter=line` — 34/34 passed.
-- `npm run test:unit` — 7/7 passed.
-- `npm run typecheck` — passed.
+- `npm ci` — 193 packages installed; zero vulnerabilities.
 - `npm run lint` — passed.
-- `npm run build` — passed; site JS 22.97 kB raw / 8.13 kB gzip, CSS 13.25 kB raw / 3.84 kB gzip.
-- `npm audit --audit-level=moderate` — 0 vulnerabilities.
+- `npm run typecheck` — passed.
+- `npm run test:unit` — 7/7 passed.
+- `npm test -- --reporter=line` — 34/34 Playwright tests passed, including all
+  19 claim tags.
+- `npm run build` — passed; produced `dist/app` and `dist/site`.
+- `npm audit --audit-level=moderate` — zero vulnerabilities.
 - `cargo fmt --manifest-path src-tauri/Cargo.toml --check` — passed.
-- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — 2/2 passed.
-
-Additional checks:
-
-- `CI=false npm run tauri -- build --bundles deb` — produced `src-tauri/target/release/bundle/deb/Project Color Beacons_0.1.5_amd64.deb`.
-- `npm run test:release` — v0.1.5 package checksums, manifest, GitHub provenance, and platform records passed. Result: Linux installable; Windows/macOS withheld.
-- `npm run test:live:site` — routes, zero-violation Axe scans, mobile, keyboard, history, privacy, demo disposal, offline reload, trust gates, and license handoff passed.
-- `npm run test:live:billing` — one active $24 product and hosted checkout redirect passed.
-- `/opt/fleet/lib/verify-url.sh` — `/`, `/demo`, `/privacy`, and `/terms` each had a title, `lang=en`, one h1, main, alt text, and no console errors.
-- Cold unknown route — `/not-a-page` returned HTTP 404 with the designed 404 page.
-- Lighthouse mobile — performance 99, accessibility 100, best practices 100, SEO 100; LCP 1.7 s, CLS 0, TBT 70 ms, transfer 103 KiB.
+- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` —
+  2/2 passed.
 - `sh -n site/public/install.sh` — passed.
 
-Evidence: `.factory/evidence/polish-4/` and `.factory/polish-4.md`.
+Package and browser gates:
+
+- `CI=false npm run tauri -- build --bundles deb` — produced the 0.1.6 amd64
+  Debian package; `dpkg-deb --info` reports version 0.1.6 and amd64.
+- Production site JavaScript is 23.00 kB raw / 8.12 kB gzip. CSS is 13.25 kB
+  raw / 3.84 kB gzip.
+- Lighthouse mobile against the production preview: performance 100,
+  accessibility 100, best practices 100, SEO 100; LCP 1.36 s, CLS 0, TBT 10 ms,
+  transfer 52,931 bytes.
+- `npx @axe-core/cli` against `/` and `/demo` — zero violations on both pages.
+- The Playwright suite covers desktop, 390 px mobile, 200% text, dark mode,
+  keyboard focus and activation, offline reload, route history, privacy request
+  boundaries, demo isolation/disposal, and console errors.
+- `npm run test:release` verifies the published 0.1.6 assets, checksums,
+  manifest, GitHub source attestations, platform status records, tag, and commit.
+- `npm run test:live:site` verifies live routes, headers, desktop and 390 px
+  behavior, Axe, keyboard, privacy, offline reload, all-platform package links,
+  checkout, and version identity.
+- `/opt/fleet/lib/verify-url.sh` verifies title, language, main landmark, image
+  alternatives, and console output on `/`, `/demo`, `/privacy`, and `/terms`.
 
 ## Run locally
 
 ```sh
 npm ci
-npm run dev:site
-npm run dev
+npm run lint
+npm run typecheck
+npm run test:unit
 npm test
 npm run build
+CI=false npm run tauri -- build --bundles deb
 ```
-
-The isolated browser demo is <https://project-color-beacons.sociobot.in/demo>.
 
 ## Needs operator action
 
-No source-code or review work remains. To publish Windows/macOS downloads, add
-these GitHub Actions secrets and trigger the next `v*` release:
+Publicly trusted operating-system signing cannot be created from repository
+source. The repository currently has no signing secrets. Builds therefore ship
+unsigned with explicit warnings, as allowed by the desktop installer contract.
+
+To remove those warnings, configure these repository secrets and publish the
+next `v*` tag:
 
 - Windows: `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD`.
-- Apple: `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`.
-
-Until those checks pass, the product intentionally offers only the verified
-Linux package. Windows/macOS links and purchase access remain unavailable.
+- Apple: `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
+  `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`.
