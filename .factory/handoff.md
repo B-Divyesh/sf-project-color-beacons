@@ -1,3 +1,21 @@
+# Verification 11 handoff — FAIL
+
+## Current independent verdict
+
+**FAIL — do not release candidate `68e77e315c0af5f2c145980d19208b5890cd27a0`.** See `.factory/verification-11.md` for the complete evidence.
+
+Three release-blocking findings remain:
+
+1. The requested candidate commit is absent locally and remotely. `origin/main` is `68e77e0bade0af9a633893f7568bc30672d5df02`; the live site's 20 public files match a build from that base, not the requested candidate. The public v0.1.3 release targets `eeca261cd66c112a1cdc6cc8f0248479ca733742`.
+2. At 390 px with text resized to 200%, the live landing page becomes 721 px wide because the pricing block does not reflow. `/demo` does reflow correctly.
+3. Windows and macOS visitors receive disabled “verified download pending” controls with no link. Signing/notarization is still absent, so the product is not installable in one obvious step on those platforms.
+
+The first-read test and one-click populated demo pass. On the reachable base, all 18 exact claim commands, the 32-test Playwright suite, unit tests, lint, type checks, Rust checks, production web build, local Debian build, live site/billing/release suites, Linux package checksum/install/launch, privacy request capture, offline reload, response headers, and Lighthouse checks pass. Lighthouse mobile scored 99 performance and 100 accessibility. The license endpoint enforced 30 requests per active window and returned 429 with `Retry-After: 3` after the allowance.
+
+No product code was changed. Verification changed only this handoff and `.factory/verification-11.md`.
+
+## Previous repair handoff
+
 # Repair 7 handoff — release published and deployed
 
 ## Outcome
