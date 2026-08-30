@@ -159,16 +159,42 @@ try {
   assert.match(await billing.locator('#download-state').innerText(), new RegExp(`v${APP_VERSION.replaceAll('.', '\\.')} .* verified package origin`));
   await billingContext.close();
 
+  for (const fixture of [
+    { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows' },
+    { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS' }
+  ]) {
+    const platformContext = await browser.newContext({ userAgent: fixture.userAgent });
+    const platformPage = await platformContext.newPage();
+    await platformPage.goto(`${origin}/`, { waitUntil: 'networkidle' });
+    const platformDownload = platformPage.locator('#download-button');
+    assert.equal(await platformDownload.getAttribute('href'), null, `${fixture.label} must not link an unsigned package`);
+    assert.equal(await platformDownload.getAttribute('aria-disabled'), 'true');
+    assert.equal(await platformPage.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
+    assert.match(await platformPage.locator('#download-state').innerText(), new RegExp(`verified ${fixture.label} download is not published`, 'i'));
+    await platformContext.close();
+  }
+
   const returnContext = await browser.newContext();
+  await returnContext.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
   const returned = await returnContext.newPage();
-  await returned.route('https://api.sociobot.in/api/v1/products/project-color-beacons/verify?license=fixture-return', (route) => route.fulfill({ json: { valid: true } }));
+  let websiteVerificationRequests = 0;
+  await returned.route('https://api.sociobot.in/api/v1/products/project-color-beacons/verify?license=fixture-return', (route) => {
+    websiteVerificationRequests += 1;
+    return route.fulfill({ json: { valid: true } });
+  });
   await returned.goto(`${origin}/?license=fixture-return`);
-  await returned.getByText('License verified. Paste the same key into the desktop app.').waitFor();
+  await returned.getByText('Your license is ready.').waitFor();
+  assert.equal(await returned.locator('#returned-license').inputValue(), 'fixture-return');
+  await returned.getByText('Copy it, then paste it into the desktop app.').waitFor();
+  await returned.getByRole('button', { name: 'Copy license key' }).click();
+  assert.equal(await returned.evaluate(() => navigator.clipboard.readText()), 'fixture-return');
   assert.equal(new URL(returned.url()).searchParams.has('license'), false);
-  assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
+  assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), null);
+  assert.equal(await returned.evaluate(() => localStorage.getItem('pcb:license-verdict')), null);
+  assert.equal(websiteVerificationRequests, 0);
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, verified Linux release, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, trusted download gates, and desktop license guidance.');
 } finally {
   await browser.close();
 }

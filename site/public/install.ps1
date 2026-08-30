@@ -25,7 +25,6 @@ $target = Join-Path $env:TEMP $asset.name
 $sumFile = Join-Path $env:TEMP "project-color-beacons-SHA256SUMS"
 $provenanceFile = Join-Path $env:TEMP "project-color-beacons-provenance.json"
 $platformSignaturesFile = Join-Path $env:TEMP "project-color-beacons-platform-signatures.json"
-Invoke-WebRequest $asset.browser_download_url -OutFile $target
 Invoke-WebRequest $sums.browser_download_url -OutFile $sumFile
 Invoke-WebRequest $provenance.browser_download_url -OutFile $provenanceFile
 Invoke-WebRequest $platformSignatures.browser_download_url -OutFile $platformSignaturesFile
@@ -36,11 +35,15 @@ if ($platformStatus.tag -ne $release.tag_name -or -not $platformStatus.githubPro
 if (-not $platformStatus.platforms.windows.provenanceVerified -or $asset.name -notin $platformStatus.platforms.windows.assets) {
   throw "The Windows package origin is not verified. Nothing was installed."
 }
+if (-not $platformStatus.platforms.windows.authenticodeVerified) {
+  throw "An Authenticode-signed Windows package is not published yet. Nothing was downloaded."
+}
+Invoke-WebRequest $asset.browser_download_url -OutFile $target
 $expected = ((Get-Content $sumFile | Where-Object { $_ -match [regex]::Escape($asset.name) }) -split ' ')[0]
 $actual = (Get-FileHash $target -Algorithm SHA256).Hash.ToLower()
 if ($expected.ToLower() -ne $actual) { Remove-Item $target; throw "Checksum failed. The download was removed." }
 $signature = Get-AuthenticodeSignature -FilePath $target
-if ($platformStatus.platforms.windows.authenticodeVerified -and $signature.Status -ne 'Valid') {
+if ($signature.Status -ne 'Valid') {
   Remove-Item $target
   throw "Windows signature verification failed: $($signature.Status). The download was removed."
 }
@@ -49,9 +52,6 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
   Write-Output "Verified GitHub package origin."
 } else {
   Write-Output "Checksum verified. Install GitHub CLI to verify the included GitHub package record."
-}
-if (-not $platformStatus.platforms.windows.authenticodeVerified) {
-  Write-Output "This build is unsigned. Windows may show a publisher warning."
 }
 Start-Process $target
 Write-Output "Verified and opened $target"

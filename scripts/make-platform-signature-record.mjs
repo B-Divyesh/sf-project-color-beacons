@@ -34,12 +34,18 @@ if (typeof windows?.authenticodeVerified !== 'boolean' || resolvedWindowsAssets.
   || resolvedWindowsAssets.length !== windowsAssets.length || windowsAssets.some((name) => !resolvedWindowsAssets.includes(name))) {
   throw new Error('The Windows signing report is missing an installer status.');
 }
+if (windows.authenticodeVerified !== true) {
+  throw new Error('Every Windows installer must have a verified Authenticode signature.');
+}
 const recordedMacAssets = macOSReports.flatMap((report) => Array.isArray(report.assets) ? report.assets : []);
 const resolvedMacAssets = recordedMacAssets.map((name) => resolveReportedAsset(name, macAssets));
 if (macOSReports.length !== 2 || macOSReports.some((report) => typeof report.codeSigned !== 'boolean' || typeof report.notarized !== 'boolean')
   || resolvedMacAssets.some((name) => !name) || resolvedMacAssets.length !== macAssets.length
   || macAssets.some((name) => !resolvedMacAssets.includes(name))) {
   throw new Error('The macOS signing reports are missing disk-image statuses.');
+}
+if (macOSReports.some((report) => report.codeSigned !== true || report.notarized !== true)) {
+  throw new Error('Every macOS disk image must be signed and notarized.');
 }
 if (linuxAssets.length === 0) throw new Error('The Linux release has no AppImage or Debian package.');
 

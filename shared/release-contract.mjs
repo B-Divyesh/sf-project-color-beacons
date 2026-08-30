@@ -1,8 +1,7 @@
 /**
  * Every published package is tied to this repository, workflow, commit, and
- * tag by GitHub provenance. Operating-system signatures are recorded and
- * disclosed separately because the public build is intentionally unsigned
- * when owner certificates are unavailable.
+ * tag by GitHub provenance. Windows and macOS packages are installable only
+ * after their operating-system trust checks also pass.
  */
 export const VERIFIED_RELEASE_MARKER = 'Source-verified desktop release.';
 export const PROVENANCE_ASSET = 'BUILD-PROVENANCE.sigstore.json';
@@ -125,7 +124,8 @@ export function platformSignatureIssues(release, record) {
 
 /** @param {Release | undefined} release @param {PlatformSignatureRecord | undefined} record */
 export function isInstallableVerifiedRelease(release, record) {
-  return platformSignatureIssues(release, record).length === 0;
+  return /** @type {const} */ (['windows', 'macOS', 'linux'])
+    .every((platform) => isPlatformInstallable(release, record, platform));
 }
 
 /**
@@ -139,6 +139,15 @@ export function platformInstallabilityIssues(release, record, platform) {
   if (record?.platforms[platform]?.provenanceVerified !== true) {
     issues.push(`The ${platform} packages do not have verified GitHub provenance.`);
   }
+  if (platform === 'windows' && record?.platforms.windows?.authenticodeVerified !== true) {
+    issues.push('The Windows packages do not have verified Authenticode signatures.');
+  }
+  if (platform === 'macOS' && record?.platforms.macOS?.codeSigned !== true) {
+    issues.push('The macOS packages do not have verified Apple signatures.');
+  }
+  if (platform === 'macOS' && record?.platforms.macOS?.notarized !== true) {
+    issues.push('The macOS packages are not verified as notarized.');
+  }
   return issues;
 }
 
@@ -150,7 +159,10 @@ export function isPlatformInstallable(release, record, platform) {
 /** @param {Release | undefined} release @param {'macOS' | 'windows' | 'linux'} platform */
 export function releaseMarksPlatformVerified(release, platform) {
   if (!isCompleteVerifiedRelease(release)) return false;
-  return release.body?.includes(PLATFORM_PROVENANCE_MARKERS[platform]) === true;
+  if (release.body?.includes(PLATFORM_PROVENANCE_MARKERS[platform]) !== true) return false;
+  if (platform === 'windows') return release.body.includes(PLATFORM_STATUS_MARKERS.windows.verified);
+  if (platform === 'macOS') return release.body.includes(PLATFORM_STATUS_MARKERS.macOS.verified);
+  return true;
 }
 
 /**

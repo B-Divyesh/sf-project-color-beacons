@@ -54,7 +54,14 @@ function landing() {
     </div></section>
     <section class="boundaries" aria-labelledby="privacy-title"><div class="shell"><div><p class="eyebrow">Privacy boundaries</p><h2 id="privacy-title">What stays on your device</h2></div><ul class="boundary-list"><li><strong>Repeat the cues.</strong> Every beacon includes a written name, symbol, and color.</li><li><strong>Confirm the project.</strong> Editor settings wait for the named confirmation.</li><li><strong>Keep data local.</strong> Project data stays on this device during normal use.</li></ul></div></section>
     <section class="pricing shell" id="download" aria-labelledby="download-title"><div class="price-slab ceramic-panel"><div><p class="eyebrow">Desktop app</p><h2 id="download-title">Start with three projects</h2><p>Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.</p><div class="actions"><a class="button" id="download-button" aria-disabled="true">Checking verified downloads…</a><span id="purchase-offer" class="purchase-offer" role="status">Checking whether license purchases are available…</span></div><p id="download-state" class="download-state" role="status">Checking for a verified desktop release…</p></div><div class="price"><strong>3</strong><span>free saved projects</span></div></div>
-      <form class="license-restore" id="license-restore"><label for="site-license">Have a license? Paste it to restore this device.</label><input id="site-license" name="license" autocomplete="off" spellcheck="false"><button type="submit" aria-label="Verify license">Verify license</button><p id="license-status" class="status-message" role="status"></p></form>
+      <p class="license-guidance" id="license-guidance"><strong>Already have a license?</strong> In the desktop app, choose <strong>License</strong> and paste your key.</p>
+      <div class="license-return" id="license-return" hidden>
+        <label for="returned-license">License key from checkout</label>
+        <div class="license-return-controls">
+          <input id="returned-license" type="text" readonly autocomplete="off">
+          <button class="button button-ghost" id="copy-returned-license" type="button">Copy license key</button>
+        </div>
+      </div>
     </section>
   </main>${footer()}`;
 }
@@ -72,7 +79,7 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a verified package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and an installable package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -96,7 +103,7 @@ function renderRoute(path = location.pathname, focusHeading = false, restoreScro
   document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', description);
   app!.innerHTML = route === '/' ? landing() : route === '/demo' ? demo() : route === '/privacy' ? privacy() : route === '/terms' ? terms() : notFound();
   if (route === '/demo') setupDemo();
-  if (route === '/') { void setupLandingReleaseState(); setupLicense(); }
+  if (route === '/') { void setupLandingReleaseState(); setupCheckoutReturnNotice(); }
   const heading = document.querySelector<HTMLElement>('h1');
   heading?.setAttribute('tabindex', '-1');
   if (focusHeading) heading?.focus({ preventScroll: true });
@@ -255,10 +262,7 @@ async function setupDownloads(): Promise<Release | null> {
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    const unsigned = platform === 'windows'
-      ? release.body?.includes('Windows Authenticode check: unavailable.')
-      : platform === 'macOS' ? release.body?.includes('macOS signing and notarization check: unavailable.') : false;
-    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${unsigned ? ' · unsigned; your system may show a warning' : ''}`;
+    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${platform === 'windows' ? ' · Authenticode verified' : platform === 'macOS' ? ' · Apple signed and notarized' : ''}`;
     return release;
   } catch {
     button.removeAttribute('href');
@@ -273,7 +277,7 @@ async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
   if (!hasInstallableRelease) {
-    offer.textContent = 'License purchases open with a verified package for this platform. The free browser demo remains available.';
+    offer.textContent = 'License purchases open with an installable package for this platform. The free browser demo remains available.';
     return;
   }
   try {
@@ -285,39 +289,29 @@ async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   }
 }
 
-function setupLicense() {
+function setupCheckoutReturnNotice() {
   const url = new URL(location.href);
   const returned = url.searchParams.get('license');
-  if (returned) {
-    localStorage.setItem('sb_license:project-color-beacons', returned);
-    url.searchParams.delete('license');
-    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
-    void verifySiteLicense(returned);
-  }
-  document.getElementById('license-restore')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const input = document.getElementById('site-license') as HTMLInputElement;
-    const token = input.value.trim();
-    const status = document.getElementById('license-status');
-    if (!token) { if (status) status.textContent = 'Paste the license key from your receipt, then verify it.'; return; }
-    void verifySiteLicense(token);
+  if (!returned) return;
+  url.searchParams.delete('license');
+  history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  const guidance = document.getElementById('license-guidance');
+  const field = document.querySelector<HTMLInputElement>('#returned-license');
+  const copy = document.querySelector<HTMLButtonElement>('#copy-returned-license');
+  if (!guidance || !field || !copy) return;
+  field.value = returned;
+  document.getElementById('license-return')?.removeAttribute('hidden');
+  guidance.innerHTML = '<strong>Your license is ready.</strong> Copy it, then paste it into the desktop app.';
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(returned);
+      guidance.innerHTML = '<strong>License key copied.</strong> In the desktop app, choose <strong>License</strong> and paste it.';
+    } catch {
+      field.focus();
+      field.select();
+      guidance.innerHTML = '<strong>Copy the selected key.</strong> In the desktop app, choose <strong>License</strong> and paste it.';
+    }
   });
-}
-
-async function verifySiteLicense(token: string) {
-  const status = document.getElementById('license-status');
-  try {
-    const response = await fetch(`https://api.sociobot.in/api/v1/products/project-color-beacons/verify?license=${encodeURIComponent(token)}`);
-    if (!response.ok) throw new Error('No answer');
-    const verdict = await response.json() as { valid: boolean };
-    if (verdict.valid) {
-      localStorage.setItem('sb_license:project-color-beacons', token);
-      localStorage.setItem('pcb:license-verdict', JSON.stringify({ valid: true, checkedAt: Date.now() }));
-      if (status) status.textContent = 'License verified. Paste the same key into the desktop app.';
-    } else if (status) status.textContent = 'This license is not active. Check the key or use a purchase option when one is available.';
-  } catch {
-    if (status) status.textContent = 'The license could not be checked. Check your connection and try again.';
-  }
 }
 
 renderRoute();

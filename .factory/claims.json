@@ -43,10 +43,17 @@
   },
   {
     "id": "free-project-limit",
-    "claim": "Color, name, symbol, and confirmation are free for three projects; a valid license removes that limit.",
-    "where": "landing facts, pricing, app license dialog, README, terms",
+    "claim": "Color, name, symbol, and confirmation are free for three projects.",
+    "where": "landing facts, pricing, README, terms",
     "test": "npm test -- --grep @claim:free-project-limit",
-    "sandbox": "browser version of the app preloaded with three local projects; exercise all four free capabilities, try a fourth project, then verify a fixture license"
+    "sandbox": "fresh browser version of the app preloaded with three local projects; exercise all four free capabilities, then assert the fourth project opens the license choice"
+  },
+  {
+    "id": "desktop-license-recovery",
+    "claim": "A checkout key can be copied on the website and pasted into the desktop app to remove the three-project limit.",
+    "where": "landing license guidance, app license dialog, README, terms",
+    "test": "npm test -- --grep @claim:desktop-license-recovery",
+    "sandbox": "fresh site and desktop profiles; copy a returned fixture key, verify it in the app, then open the fourth-project form"
   },
   {
     "id": "beacon-stability",
@@ -78,17 +85,17 @@
   },
   {
     "id": "platform-download",
-    "claim": "The landing page selects a source-verified package for each desktop platform only when every required release asset is present.",
+    "claim": "The landing page links each desktop package only when its required provenance and operating-system trust checks pass.",
     "where": "landing download section, README",
     "test": "npm test -- --grep @claim:platform-download",
-    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents; unsigned source-verified and incomplete GitHub release responses; assert only the CORS-safe GitHub API is fetched"
+    "sandbox": "fresh macOS, Windows, and Linux browser contexts; signed, unsigned, and incomplete release fixtures; assert unsigned Windows and macOS packages have no links"
   },
   {
     "id": "platform-signatures",
-    "claim": "Every platform download requires verified GitHub provenance; Windows and macOS operating-system signature status stays explicit.",
+    "claim": "Windows downloads require Authenticode verification; macOS downloads require Apple signing and notarization.",
     "where": "README, release workflow, download gate",
     "test": "npm test -- --grep @claim:platform-signatures",
-    "sandbox": "complete recorded release; unsigned Windows and macOS packages remain installable with warnings; false provenance closes each platform"
+    "sandbox": "complete release and platform records; reject unsigned Windows, unsigned or unnotarized macOS, false provenance, and missing trust fields"
   },
   {
     "id": "settings-preserved",
@@ -120,9 +127,9 @@
   },
   {
     "id": "checkout-availability",
-    "claim": "The site shows a purchase link only when checkout is active and a verified package exists for the visitor's platform.",
+    "claim": "The site shows a purchase link only when checkout is active and an installable package exists for the visitor's platform.",
     "where": "pricing, terms, README",
     "test": "npm test -- --grep @claim:checkout-availability",
-    "sandbox": "mock mismatched and active matching catalogue responses with complete signed and unsigned release responses; assert no checkout without both conditions and the exact product link and price only with both"
+    "sandbox": "mock matching catalogue and release responses across platforms; assert no checkout for unsigned Windows or macOS and the exact product link only with an installable package"
   }
 ]

@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-30 after repair 9. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-30 for polish round 4. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -29,12 +29,19 @@ Checked 2026-08-30 after repair 9. Hyphenated terms, paths, prices, and versions
 | 7 | pricing | A valid license removes the project limit. |
 | 8 | download state | A verified [platform] download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 12 | release state pattern | v0.1.5 · [package filename] · verified package origin · unsigned; your system may show a warning. |
-| 10 | purchase state | License purchases open with a verified package for this platform. |
+| 10 | trusted Windows state pattern | v0.1.5 · [package filename] · verified package origin · Authenticode verified. |
+| 12 | trusted macOS state pattern | v0.1.5 · [package filename] · verified package origin · Apple signed and notarized. |
+| 10 | purchase state | License purchases open with an installable package for this platform. |
 | 4 | purchase detail | $24 one-time · unlimited projects. |
 | 5 | purchase state | License purchases are being prepared. |
 | 6 | purchase state | The free app stores three projects. |
-| 6 | license restore | Paste it to restore this device. |
+| 4 | license guidance | Already have a license? |
+| 10 | license guidance | In the desktop app, choose License and paste your key. |
+| 4 | purchase return | Your license is ready. |
+| 9 | purchase return | Copy it, then paste it into the desktop app. |
+| 3 | copy result | License key copied. |
+| 9 | copy result | In the desktop app, choose License and paste it. |
+| 4 | copy fallback | Copy the selected key. |
 | 6 | footer | Mark each project before you edit. |
 
 ## Landing headings and actions
@@ -53,8 +60,9 @@ Checked 2026-08-30 after repair 9. Hyphenated terms, paths, prices, and versions
 | 5 | h2 | What stays on your device |
 | 2 | eyebrow | Desktop app |
 | 4 | h2 | Start with three projects |
-| 2 | action | Verify license |
 | 4 | unavailable action | Verified [platform] download pending |
+| 4 | field label | License key from checkout |
+| 3 | action | Copy license key |
 
 ## Demo and error copy checked
 
@@ -66,7 +74,9 @@ Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent f
 
 The release status uses “verified package origin” for GitHub provenance. It reserves “signed” and “notarized” for operating-system trust checks.
 
-The README states that every platform needs a complete, source-verified release. It also discloses unsigned Windows and macOS system warnings.
+The README states that every platform needs a complete release with verified GitHub provenance. It says Windows needs Authenticode verification and macOS needs Apple signing and notarization.
+
+The README uses “browser-accessible API” instead of browser-security jargon. It directs license holders to the desktop app and makes no website restoration promise.
 
 ## Terminology
 
@@ -81,4 +91,4 @@ The README states that every platform needs a complete, source-verified release.
 | Configuration written into an editor folder | editor settings |
 | GitHub record of package origin | GitHub provenance file |
 
-Catalog description: “Mark each project with a color, name, and symbol before editing.” (11 words, 64 characters without the newline.)
+Catalog description: “Mark every project with a color, name, and symbol before you edit.” (12 words, 66 characters without the newline.)

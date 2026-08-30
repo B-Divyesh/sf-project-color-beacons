@@ -42,7 +42,6 @@ platform_signatures_url="$(sed -n 's/.*"browser_download_url": "\([^"]*platform-
 [ -n "$asset_url" ] && [ -n "$checksum_url" ] && [ -n "$provenance_url" ] && [ -n "$platform_signatures_url" ] || { printf '%s\n' 'A matching verified desktop release is not published yet.' >&2; exit 1; }
 filename="${asset_url##*/}"
 destination="${TMPDIR:-/tmp}/$filename"
-curl -fsSL "$asset_url" -o "$destination"
 curl -fsSL "$checksum_url" -o "$checksums"
 curl -fsSL "$provenance_url" -o "$provenance"
 curl -fsSL "$platform_signatures_url" -o "$platform_signatures"
@@ -72,8 +71,13 @@ case "$(uname -s)" in
       printf '%s\n' 'The macOS package origin is not verified. Nothing was installed.' >&2
       exit 1
     }
+    printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true' || {
+      printf '%s\n' 'A signed and notarized macOS package is not published yet. Nothing was downloaded.' >&2
+      exit 1
+    }
     ;;
 esac
+curl -fsSL "$asset_url" -o "$destination"
 expected="$(grep " $filename\$" "$checksums" | cut -d ' ' -f 1)"
 if command -v sha256sum >/dev/null 2>&1; then
   actual="$(sha256sum "$destination" | cut -d ' ' -f 1)"
@@ -95,11 +99,7 @@ if [ "$(uname -s)" = "Linux" ]; then
 else
   final="$HOME/Downloads/$filename"
   mv "$destination" "$final"
-  if printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true'; then
-    spctl --assess --type open --context context:primary-signature --verbose "$final"
-    open "$final"
-    printf 'Verified and opened %s\n' "$final"
-  else
-    printf 'Verified and saved unsigned package at %s. Right-click it and choose Open.\n' "$final"
-  fi
+  spctl --assess --type open --context context:primary-signature --verbose "$final"
+  open "$final"
+  printf 'Verified and opened %s\n' "$final"
 fi

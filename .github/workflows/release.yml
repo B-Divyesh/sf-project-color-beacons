@@ -41,7 +41,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils file
       - run: npm ci
-      - name: Configure optional Windows code-signing certificate
+      - name: Require Windows code-signing certificate
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
@@ -50,10 +50,9 @@ jobs:
         run: |
           $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX)
           $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)
-          if ($hasCertificate -ne $hasPassword) {
-            throw 'Configure both WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD, or neither.'
+          if (-not $hasCertificate -or -not $hasPassword) {
+            throw 'WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD are required. Unsigned Windows installers are not published.'
           }
-          if (-not $hasCertificate) { Write-Output 'No Windows certificate is configured; the package will be recorded as unsigned.' }
       - name: Import Windows signing certificate
         if: matrix.platform == 'windows-latest' && env.WINDOWS_SIGNING_CONFIGURED == 'true'
         shell: pwsh
@@ -73,8 +72,8 @@ jobs:
           $config.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name timestampUrl -Value 'http://timestamp.digicert.com'
           $config | ConvertTo-Json -Depth 20 | Set-Content $configPath
           Remove-Item $pfxPath
-      - name: Build unsigned or non-macOS package
-        if: matrix.platform != 'macos-latest' || env.APPLE_SIGNING_CONFIGURED != 'true'
+      - name: Build Linux or signed Windows package
+        if: matrix.platform != 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,8 +87,16 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
+      - name: Require Apple signing and notarization credentials
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          if [ "${APPLE_SIGNING_CONFIGURED}" != 'true' ]; then
+            printf '%s\n' 'Apple signing and notarization credentials are required. Unsigned macOS packages are not published.' >&2
+            exit 1
+          fi
       - name: Build signed and notarized macOS package
-        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING_CONFIGURED == 'true'
+        if: matrix.platform == 'macos-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -117,7 +124,7 @@ jobs:
           if ($installers.Count -lt 2) { throw 'Both Windows MSI and executable installers are required.' }
           $statuses = @($installers | ForEach-Object { Get-AuthenticodeSignature -FilePath $_.FullName })
           $verified = @($statuses | Where-Object { $_.Status -ne 'Valid' }).Count -eq 0
-          if ($env:WINDOWS_SIGNING_CONFIGURED -eq 'true' -and -not $verified) { throw "A Windows installer signature verification failed." }
+          if (-not $verified) { throw "A Windows installer signature verification failed." }
           @{ platform = 'windows'; assets = @($installers.Name); authenticodeVerified = $verified } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
       - name: Record macOS signing and notarization status
         if: matrix.platform == 'macos-latest'
@@ -127,20 +134,12 @@ jobs:
           disk_images=()
           while IFS= read -r disk_image; do disk_images+=("$disk_image"); done < <(find src-tauri/target -name '*.dmg' -type f)
           test "${#disk_images[@]}" -gt 0
-          code_signed=false
-          notarized=false
-          if [ "${APPLE_SIGNING_CONFIGURED}" = 'true' ]; then
-            code_signed=true
-            notarized=true
-          fi
           for disk_image in "${disk_images[@]}"; do
-            if [ "${APPLE_SIGNING_CONFIGURED}" = 'true' ]; then
-              assessment="$(spctl --assess --type open --context context:primary-signature --verbose "$disk_image" 2>&1)"
-              printf '%s\n' "$assessment"
-              printf '%s' "$assessment" | grep -Eq 'Notarized Developer ID|source=Notarized Developer ID'
-            fi
+            assessment="$(spctl --assess --type open --context context:primary-signature --verbose "$disk_image" 2>&1)"
+            printf '%s\n' "$assessment"
+            printf '%s' "$assessment" | grep -Eq 'Notarized Developer ID|source=Notarized Developer ID'
           done
-          node -e 'const fs=require("fs"); const [signed, notarized, ...names]=process.argv.slice(1); fs.writeFileSync("platform-signature-${{ matrix.target }}.json", JSON.stringify({platform:"macOS",assets:names,codeSigned:signed==="true",notarized:notarized==="true"},null,2));' "$code_signed" "$notarized" "${disk_images[@]##*/}"
+          node -e 'const fs=require("fs"); const names=process.argv.slice(1); fs.writeFileSync("platform-signature-${{ matrix.target }}.json", JSON.stringify({platform:"macOS",assets:names,codeSigned:true,notarized:true},null,2));' "${disk_images[@]##*/}"
       - name: Upload platform signature report
         if: matrix.platform == 'windows-latest' || matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4

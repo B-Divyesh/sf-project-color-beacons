@@ -54,9 +54,12 @@
 .price span { color: var(--silt); }
 .price-slab .actions > *, .purchase-offer > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 .purchase-offer { display: flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; max-width: 100%; color: var(--silt); }
-.license-restore { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--seam); display: grid; grid-template-columns: 1fr auto; gap: 12px; }
-.license-restore label { grid-column: 1 / -1; font-weight: 700; }
-.license-restore input { min-height: 46px; min-width: 0; border: 1px solid var(--seam); border-radius: 10px; padding: 10px 12px; background: var(--frost); color: var(--ink); }
+.license-guidance { margin: 28px 0 0; padding-top: 24px; border-top: 1px solid var(--seam); color: var(--silt); }
+.license-guidance strong { color: var(--ink); }
+.license-return { margin-top: 16px; }
+.license-return label { display: block; margin-bottom: 8px; font-weight: 700; }
+.license-return-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.license-return-controls input { flex: 1 1 16rem; min-width: 0; min-height: 44px; border: 1px solid var(--seam); border-radius: 8px; padding: 10px 12px; background: var(--porcelain); color: var(--ink); font: inherit; }
 
 .legal, .not-found { padding-block: 72px 96px; min-height: 68vh; }
 .legal h1, .not-found h1 { max-width: 13ch; }
@@ -123,8 +126,6 @@
   .config-output summary { min-height: 44px; font-size: .82rem; }
   .demo-project { grid-template-columns: 40px minmax(0, 1fr) minmax(104px, 38%); gap: 8px; padding: 10px; }
   .demo-project p { font-size: .76rem; }
-  .license-restore { grid-template-columns: 1fr; }
-  .license-restore label { grid-column: auto; }
 }
 
 @media (prefers-color-scheme: dark) {

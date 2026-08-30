@@ -89,11 +89,12 @@ try {
   ]);
   const platformIssues = platformSignatureIssues(release, platformSignatures);
   if (platformIssues.length) throw new Error(platformIssues.join(' '));
-  for (const platform of ['macOS', 'windows', 'linux']) {
-    if (!isPlatformInstallable(release, platformSignatures, platform)) {
-      throw new Error(`The release has no installable ${platform} package with verified provenance.`);
-    }
-  }
+  const installability = Object.fromEntries(
+    ['macOS', 'windows', 'linux'].map((platform) => [
+      platform,
+      isPlatformInstallable(release, platformSignatures, platform) ? 'installable' : 'withheld'
+    ])
+  );
   const checksums = parseChecksums(sumsText);
   const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET, PLATFORM_SIGNATURES_ASSET].includes(asset.name));
   const publishedStatement = decodeStatement(publishedBundle);
@@ -131,6 +132,7 @@ try {
     attestation: VERIFIED_RELEASE_MARKER,
     source: `${repository}/.github/workflows/release.yml@refs/tags/${release.tag_name}`,
     platformTrust: platformSignatures.platforms,
+    installability,
     packages: packageAssets.map((asset) => asset.name),
     result: 'pass'
   }, null, 2));
