@@ -2,13 +2,14 @@
 
 Scope: released candidate `5ab7ae5cb31ee9a07568945c73803ceeeb82d187`,
 review report `31a2b61771bd0920c0baecee6ace96d6ea940ccb`, every earlier
-review and polish report, and repair commits `db35e4933b73d11052af84461192c43b77a73d9d`
-and `a500849268c86715715cbd1ecdb676f67afff524`.
+review and polish report, and repair commits `db35e4933b73d11052af84461192c43b77a73d9d`,
+`a500849268c86715715cbd1ecdb676f67afff524`, and
+`fa186752248d506c66b89a00093eeb8525e8e160`.
 
 The repair is deployed at <https://project-color-beacons.sociobot.in>.
 Evidence screenshots and the live summary are in `.factory/evidence/polish-4/`.
 All 19 claim commands passed separately from clean clone
-`/tmp/project-color-beacons-clean.mrJY3m`, then the full 34-test suite passed.
+`/tmp/project-color-beacons-clean.QmZ7oa`, then the full 34-test suite passed.
 
 | Finding | Change made | Evidence |
 | --- | --- | --- |
@@ -27,7 +28,7 @@ All 19 claim commands passed separately from clean clone
 | F-1-13 | The privacy heading is “What stays on your device.” | `.factory/copy-audit.md`; live `/`. |
 | F-1-14 | Demo language says “Separate sample workspace” and makes the storage boundary explicit. | `@claim:demo-isolated`; `.factory/evidence/polish-4/demo-mobile.webp`. |
 | F-1-15 | Both 404 paths use direct not-found wording and a Return home action. | `routes have accessible structure`; `.factory/evidence/polish-4/not-found.webp`. |
-| F-2-1 | History state stores scroll per entry, restores it deterministically, focuses h1, and announces route changes. Implicit smooth route scrolling was removed. | `SPA Back and Forward restore focus and each history entry scroll position` passed five repeats and the clean full suite; `npm run test:live:site`. |
+| F-2-1 | History state stores scroll per entry, restores it deterministically, focuses h1, and announces route changes. Route transitions suppress stale scroll events. | `SPA Back and Forward restore focus and each history entry scroll position` passed 20 repeats and the clean full suite; `npm run test:live:site`. |
 | F-2-2 | No product-controlled path exposes unsigned Windows or macOS installers or checkout. | `@claim:platform-download`, `@claim:checkout-availability`; platform gate screenshots; live cold user-agent checks. |
 | F-2-3 | Saved color, name, and symbol survive a fresh app page. | `@claim:beacon-stability`. |
 | F-2-4 | Documentation distinguishes GitHub provenance, Authenticode, Apple signing, and notarization. | `@claim:release-signing`, `@claim:platform-signatures`; README. |

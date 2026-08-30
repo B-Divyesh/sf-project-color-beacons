@@ -10,6 +10,7 @@ Repair commits:
 
 - `db35e4933b73d11052af84461192c43b77a73d9d` — platform trust gates, license handoff, claims, copy, tests, and release workflow.
 - `a500849268c86715715cbd1ecdb676f67afff524` — deterministic route scroll restoration and reduced-motion handling.
+- `fa186752248d506c66b89a00093eeb8525e8e160` — suppress stale scroll events during route transitions.
 
 Deployment ID: `b982f36e-7491-4b53-9461-6aa9bbabce0c`.
 
@@ -22,12 +23,12 @@ Deployment ID: `b982f36e-7491-4b53-9461-6aa9bbabce0c`.
 - Website license verification and storage were removed. A checkout return can be copied once and pasted into the desktop License dialog.
 - Added the tagged `desktop-license-recovery` claim and expanded trust, checkout, mobile, privacy, and live tests.
 - Replaced README jargon, updated the 66-character verb-first catalog description, and refreshed the copy audit.
-- Removed implicit smooth route scrolling so Back and Forward restore each entry exactly. Explicit preview motion respects reduced-motion settings.
+- Removed implicit smooth route scrolling and isolated transition events so Back and Forward restore each entry exactly. Explicit preview motion respects reduced-motion settings.
 - Preserved the glacial ceramic identity, Tauri desktop class, local-first app, and isolated `demo:` storage.
 
 ## Verification
 
-Clean clone `/tmp/project-color-beacons-clean.mrJY3m` at `a500849268c86715715cbd1ecdb676f67afff524`:
+Clean clone `/tmp/project-color-beacons-clean.QmZ7oa` at `fa186752248d506c66b89a00093eeb8525e8e160`:
 
 - `npm ci` — 193 packages, 0 vulnerabilities.
 - Every one of the 19 `.factory/claims.json` commands — passed separately.
@@ -35,7 +36,7 @@ Clean clone `/tmp/project-color-beacons-clean.mrJY3m` at `a500849268c86715715cbd
 - `npm run test:unit` — 7/7 passed.
 - `npm run typecheck` — passed.
 - `npm run lint` — passed.
-- `npm run build` — passed; site JS 22.92 kB raw / 8.11 kB gzip, CSS 13.25 kB raw / 3.84 kB gzip.
+- `npm run build` — passed; site JS 22.97 kB raw / 8.13 kB gzip, CSS 13.25 kB raw / 3.84 kB gzip.
 - `npm audit --audit-level=moderate` — 0 vulnerabilities.
 - `cargo fmt --manifest-path src-tauri/Cargo.toml --check` — passed.
 - `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — 2/2 passed.
