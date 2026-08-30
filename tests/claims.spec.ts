@@ -407,16 +407,19 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
   const reportFolder = mkdtempSync(join(tmpdir(), 'pcb-platform-reports-'));
   try {
     for (const asset of release.assets ?? []) writeFileSync(join(releaseFolder, asset.name), 'fixture');
-    writeFileSync(join(reportFolder, 'windows.json'), JSON.stringify(linuxOnly.platforms.windows));
+    writeFileSync(join(reportFolder, 'windows.json'), JSON.stringify({
+      ...linuxOnly.platforms.windows,
+      asset: 'Project Color Beacons_0.1.2_x64_en-US.msi'
+    }));
     writeFileSync(join(reportFolder, 'mac-x64.json'), JSON.stringify({
       platform: 'macOS',
-      assets: ['Project.Color.Beacons_0.1.2_x64.dmg'],
+      assets: ['Project Color Beacons_0.1.2_x64.dmg'],
       codeSigned: false,
       notarized: false
     }));
     writeFileSync(join(reportFolder, 'mac-arm.json'), JSON.stringify({
       platform: 'macOS',
-      assets: ['Project.Color.Beacons_0.1.2_aarch64.dmg'],
+      assets: ['Project Color Beacons_0.1.2_aarch64.dmg'],
       codeSigned: false,
       notarized: false
     }));
@@ -425,8 +428,14 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
     writeFileSync(join(reportFolder, 'windows.json'), JSON.stringify(windowsReport));
     execFileSync('node', ['scripts/make-platform-signature-record.mjs', releaseFolder, reportFolder, 'v0.1.2'], { cwd: process.cwd() });
     const generated = JSON.parse(readFileSync(join(releaseFolder, 'platform-signatures.json'), 'utf8')) as PlatformSignatureRecord;
+    expect(generated.platforms.windows?.asset).toBe('Project.Color.Beacons_0.1.2_x64_en-US.msi');
     expect(generated.platforms.windows?.authenticodeVerified).toBe(false);
     expect(generated.platforms.macOS).toMatchObject({ codeSigned: false, notarized: false });
+    expect(generated.platforms.macOS?.assets).toHaveLength(2);
+    expect(generated.platforms.macOS?.assets).toEqual(expect.arrayContaining([
+      'Project.Color.Beacons_0.1.2_x64.dmg',
+      'Project.Color.Beacons_0.1.2_aarch64.dmg'
+    ]));
     expect(generated.platforms.linux?.provenanceVerified).toBe(true);
     execFileSync('node', [
       'scripts/make-release-body.mjs',
