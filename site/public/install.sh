@@ -18,6 +18,23 @@ grep -q '"body": "Source-verified desktop release\.' "$release_json" || {
   printf '%s\n' 'A source-verified desktop release is not published yet.' >&2
   exit 1
 }
+asset_names="$(sed -n 's/^[[:space:]]*"name": "\([^"]*\)",*$/\1/p' "$release_json")"
+require_asset() {
+  printf '%s\n' "$asset_names" | grep -Eqi "$1" || {
+    printf 'The release is incomplete: missing %s. Nothing was installed.\n' "$2" >&2
+    exit 1
+  }
+}
+require_asset 'x64\.dmg$' 'Intel macOS package'
+require_asset 'aarch64\.dmg$' 'Apple-silicon macOS package'
+require_asset '\.msi$' 'Windows MSI package'
+require_asset '\-setup\.exe$' 'Windows executable package'
+require_asset '\.AppImage$' 'Linux AppImage package'
+require_asset '\.deb$' 'Linux Debian package'
+require_asset '^SHA256SUMS$' 'checksum file'
+require_asset '^latest\.json$' 'download manifest'
+require_asset '^BUILD-PROVENANCE\.sigstore\.json$' 'source provenance file'
+require_asset '^platform-signatures\.json$' 'platform trust record'
 asset_url="$(sed -n 's/.*"browser_download_url": "\([^"]*\)".*/\1/p' "$release_json" | grep "$pattern" | head -n 1)"
 checksum_url="$(sed -n 's/.*"browser_download_url": "\([^"]*SHA256SUMS\)".*/\1/p' "$release_json" | head -n 1)"
 provenance_url="$(sed -n 's/.*"browser_download_url": "\([^"]*BUILD-PROVENANCE.sigstore.json\)".*/\1/p' "$release_json" | head -n 1)"
@@ -30,6 +47,19 @@ curl -fsSL "$checksum_url" -o "$checksums"
 curl -fsSL "$provenance_url" -o "$provenance"
 curl -fsSL "$platform_signatures_url" -o "$platform_signatures"
 compact_status="$(tr -d '[:space:]' < "$platform_signatures")"
+release_tag="$(sed -n 's/^[[:space:]]*"tag_name": "\([^"]*\)",*$/\1/p' "$release_json" | head -n 1)"
+printf '%s' "$compact_status" | grep -Fq "\"tag\":\"$release_tag\"" || {
+  printf '%s\n' 'The package record names a different release. Nothing was installed.' >&2
+  exit 1
+}
+printf '%s' "$compact_status" | grep -q '"githubProvenanceVerified":true' || {
+  printf '%s\n' 'The package source is not verified. Nothing was installed.' >&2
+  exit 1
+}
+printf '%s' "$compact_status" | grep -Fq "\"$filename\"" || {
+  printf '%s\n' 'The selected package is absent from its platform record. Nothing was installed.' >&2
+  exit 1
+}
 case "$(uname -s)" in
   Linux)
     printf '%s' "$compact_status" | grep -q '"linux":{[^}]*"provenanceVerified":true' || {
@@ -38,8 +68,8 @@ case "$(uname -s)" in
     }
     ;;
   Darwin)
-    printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true' || {
-      printf '%s\n' 'A signed and notarized macOS package is not published yet.' >&2
+    printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"provenanceVerified":true' || {
+      printf '%s\n' 'The macOS package origin is not verified. Nothing was installed.' >&2
       exit 1
     }
     ;;
@@ -63,9 +93,13 @@ if [ "$(uname -s)" = "Linux" ]; then
   install -m 755 "$destination" "$install_dir/project-color-beacons"
   printf 'Installed Project Color Beacons at %s\n' "$install_dir/project-color-beacons"
 else
-  spctl --assess --type open --context context:primary-signature --verbose "$destination"
   final="$HOME/Downloads/$filename"
   mv "$destination" "$final"
-  open "$final"
-  printf 'Verified and opened %s\n' "$final"
+  if printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true'; then
+    spctl --assess --type open --context context:primary-signature --verbose "$final"
+    open "$final"
+    printf 'Verified and opened %s\n' "$final"
+  else
+    printf 'Verified and saved unsigned package at %s. Right-click it and choose Open.\n' "$final"
+  fi
 fi

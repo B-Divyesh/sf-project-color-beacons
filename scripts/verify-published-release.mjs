@@ -89,8 +89,10 @@ try {
   ]);
   const platformIssues = platformSignatureIssues(release, platformSignatures);
   if (platformIssues.length) throw new Error(platformIssues.join(' '));
-  if (!isPlatformInstallable(release, platformSignatures, 'linux')) {
-    throw new Error('The release has no installable Linux package with verified provenance.');
+  for (const platform of ['macOS', 'windows', 'linux']) {
+    if (!isPlatformInstallable(release, platformSignatures, platform)) {
+      throw new Error(`The release has no installable ${platform} package with verified provenance.`);
+    }
   }
   const checksums = parseChecksums(sumsText);
   const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET, PLATFORM_SIGNATURES_ASSET].includes(asset.name));

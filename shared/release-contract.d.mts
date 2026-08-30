@@ -18,13 +18,14 @@ export type Release = {
 export const VERIFIED_RELEASE_MARKER: string;
 export const PROVENANCE_ASSET: string;
 export const PLATFORM_SIGNATURES_ASSET: string;
+export const PLATFORM_PROVENANCE_MARKERS: Record<ReleasePlatform, string>;
 export const PLATFORM_STATUS_MARKERS: Record<ReleasePlatform, { verified: string; unavailable?: string }>;
 export type PlatformSignatureRecord = {
   tag: string;
   githubProvenanceVerified: boolean;
   platforms: {
-    windows?: { asset: string; authenticodeVerified: boolean };
-    macOS?: { assets: string[]; codeSigned: boolean; notarized: boolean };
+    windows?: { assets: string[]; provenanceVerified: boolean; authenticodeVerified: boolean };
+    macOS?: { assets: string[]; provenanceVerified: boolean; codeSigned: boolean; notarized: boolean };
     linux?: { assets: string[]; provenanceVerified: boolean };
   };
 };

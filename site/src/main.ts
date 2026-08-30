@@ -242,11 +242,11 @@ async function setupDownloads(): Promise<Release | null> {
     const cache = JSON.parse(localStorage.getItem('pcb:release-cache') ?? '{}') as { at?: number; data?: Release };
     let release = isCompleteVerifiedRelease(cache.data) ? cache.data : undefined;
     if (!release || !cache.at || Date.now() - cache.at > 3_600_000) {
-      const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', { headers: { Accept: 'application/vnd.github+json' } });
+      const response = await fetch('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', { headers: { Accept: 'application/vnd.github+json' } });
       if (!response.ok) throw new Error('Release not available');
-      const releases = await response.json() as Release[];
-      release = releases.find(isCompleteVerifiedRelease);
-      if (!release) throw new Error('Release not available');
+      const latest = await response.json() as Release;
+      if (!isCompleteVerifiedRelease(latest)) throw new Error('Release not available');
+      release = latest;
       localStorage.setItem('pcb:release-cache', JSON.stringify({ at: Date.now(), data: release }));
     }
     if (!releaseMarksPlatformVerified(release, platform)) throw new Error('Platform trust not available');
@@ -255,7 +255,10 @@ async function setupDownloads(): Promise<Release | null> {
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin`;
+    const unsigned = platform === 'windows'
+      ? release.body?.includes('Windows Authenticode check: unavailable.')
+      : platform === 'macOS' ? release.body?.includes('macOS signing and notarization check: unavailable.') : false;
+    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${unsigned ? ' · unsigned; your system may show a warning' : ''}`;
     return release;
   } catch {
     button.removeAttribute('href');

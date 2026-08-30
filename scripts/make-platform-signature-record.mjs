@@ -27,9 +27,11 @@ const resolveReportedAsset = (reportedName, releaseAssets) => {
   const matches = releaseAssets.filter((name) => canonicalBundleName(name) === canonicalName);
   return matches.length === 1 ? matches[0] : undefined;
 };
-const windowsAsset = resolveReportedAsset(windows?.asset, windowsAssets);
+const reportedWindowsAssets = Array.isArray(windows?.assets) ? windows.assets : [];
+const resolvedWindowsAssets = reportedWindowsAssets.map((name) => resolveReportedAsset(name, windowsAssets));
 
-if (typeof windows?.authenticodeVerified !== 'boolean' || !windowsAsset) {
+if (typeof windows?.authenticodeVerified !== 'boolean' || resolvedWindowsAssets.some((name) => !name)
+  || resolvedWindowsAssets.length !== windowsAssets.length || windowsAssets.some((name) => !resolvedWindowsAssets.includes(name))) {
   throw new Error('The Windows signing report is missing an installer status.');
 }
 const recordedMacAssets = macOSReports.flatMap((report) => Array.isArray(report.assets) ? report.assets : []);
@@ -45,9 +47,10 @@ const record = {
   tag,
   githubProvenanceVerified: true,
   platforms: {
-    windows: { asset: windowsAsset, authenticodeVerified: windows.authenticodeVerified },
+    windows: { assets: resolvedWindowsAssets, provenanceVerified: true, authenticodeVerified: windows.authenticodeVerified },
     macOS: {
       assets: macAssets,
+      provenanceVerified: true,
       codeSigned: macOSReports.every((report) => report.codeSigned),
       notarized: macOSReports.every((report) => report.notarized)
     },

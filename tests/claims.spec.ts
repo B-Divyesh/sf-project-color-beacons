@@ -13,7 +13,6 @@ import {
   isPlatformInstallable,
   platformInstallabilityIssues,
   platformSignatureIssues,
-  verifiedReleaseIssues,
   type PlatformSignatureRecord,
   type Release
 } from '../shared/release-contract.mjs';
@@ -25,6 +24,7 @@ function verifiedReleaseFixture(overrides: Partial<Release> = {}): Release {
     'Project.Color.Beacons_0.1.2_x64.dmg',
     'Project.Color.Beacons_0.1.2_aarch64.dmg',
     'Project.Color.Beacons_0.1.2_x64_en-US.msi',
+    'Project.Color.Beacons_0.1.2_x64-setup.exe',
     'Project.Color.Beacons_0.1.2_amd64.AppImage',
     'Project.Color.Beacons_0.1.2_amd64.deb',
     'SHA256SUMS',
@@ -35,7 +35,7 @@ function verifiedReleaseFixture(overrides: Partial<Release> = {}): Release {
   return {
     tag_name: 'v0.1.2',
     target_commitish: '0fcfb94c1d96581214396223658ce0b2d1d6b82c',
-    body: 'Source-verified desktop release. Linux provenance check: passed. Windows Authenticode check: passed. macOS signing and notarization check: passed.',
+    body: 'Source-verified desktop release. Linux source provenance check: passed. Windows source provenance check: passed. macOS source provenance check: passed. Windows Authenticode check: unavailable. macOS signing and notarization check: unavailable.',
     draft: false,
     prerelease: false,
     assets,
@@ -43,20 +43,21 @@ function verifiedReleaseFixture(overrides: Partial<Release> = {}): Release {
   };
 }
 
-async function routePlatformStatus(page: Page, record = platformSignatureFixture()) {
-  await page.route('**/platform-signatures.json', (route) => route.fulfill({ json: record }));
-}
-
 function platformSignatureFixture(overrides: Partial<PlatformSignatureRecord> = {}): PlatformSignatureRecord {
   return {
     tag: 'v0.1.2',
     githubProvenanceVerified: true,
     platforms: {
-      windows: { asset: 'Project.Color.Beacons_0.1.2_x64_en-US.msi', authenticodeVerified: true },
+      windows: {
+        assets: ['Project.Color.Beacons_0.1.2_x64_en-US.msi', 'Project.Color.Beacons_0.1.2_x64-setup.exe'],
+        provenanceVerified: true,
+        authenticodeVerified: false
+      },
       macOS: {
         assets: ['Project.Color.Beacons_0.1.2_x64.dmg', 'Project.Color.Beacons_0.1.2_aarch64.dmg'],
-        codeSigned: true,
-        notarized: true
+        provenanceVerified: true,
+        codeSigned: false,
+        notarized: false
       },
       linux: {
         assets: ['Project.Color.Beacons_0.1.2_amd64.AppImage', 'Project.Color.Beacons_0.1.2_amd64.deb'],
@@ -251,19 +252,22 @@ test('@claim:release-manifest release metadata includes checksums and platform f
   const folder = mkdtempSync(join(tmpdir(), 'pcb-release-'));
   try {
     writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_x64.dmg'), 'mac');
+    writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_aarch64.dmg'), 'mac-arm');
     writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_x64_en-US.msi'), 'windows');
+    writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_x64-setup.exe'), 'windows-exe');
     writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_amd64.AppImage'), 'linux');
+    writeFileSync(join(folder, 'Project.Color.Beacons_0.1.2_amd64.deb'), 'linux-deb');
     execFileSync('node', ['scripts/make-release-manifest.mjs', folder, 'v0.1.2'], { cwd: process.cwd() });
     const sums = readFileSync(join(folder, 'SHA256SUMS'), 'utf8');
-    expect(sums.trim().split('\n')).toHaveLength(3);
+    expect(sums.trim().split('\n')).toHaveLength(6);
     expect(sums).toContain('Project.Color.Beacons_0.1.2_x64.dmg');
     expect(sums).toContain('Project.Color.Beacons_0.1.2_x64_en-US.msi');
     expect(sums).toContain('Project.Color.Beacons_0.1.2_amd64.AppImage');
     const manifest = JSON.parse(readFileSync(join(folder, 'latest.json'), 'utf8')) as { version: string; platforms: Record<string, unknown[]> };
     expect(manifest.version).toBe('0.1.2');
-    expect(manifest.platforms.macos).toHaveLength(1);
-    expect(manifest.platforms.windows).toHaveLength(1);
-    expect(manifest.platforms.linux).toHaveLength(1);
+    expect(manifest.platforms.macos).toHaveLength(2);
+    expect(manifest.platforms.windows).toHaveLength(2);
+    expect(manifest.platforms.linux).toHaveLength(2);
   } finally {
     rmSync(folder, { recursive: true, force: true });
   }
@@ -336,7 +340,7 @@ test('shell installer saves the portable provenance bundle with a GitHub CLI-sup
   expect(installer).toContain('gh attestation verify "$destination" --repo "$repo" --bundle "$provenance"');
 });
 
-test('@claim:platform-download resolves only complete verified matching assets for macOS, Windows, and Linux', async ({ browser }) => {
+test('@claim:platform-download exposes source-verified unsigned packages for all platforms and fails closed on an incomplete release', async ({ browser }) => {
   const fixtures = [
     { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS', asset: 'Project.Color.Beacons_0.1.2_x64.dmg' },
     { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows', asset: 'Project.Color.Beacons_0.1.2_x64_en-US.msi' },
@@ -347,20 +351,24 @@ test('@claim:platform-download resolves only complete verified matching assets f
   for (const fixture of fixtures) {
     const context = await browser.newContext({ userAgent: fixture.userAgent });
     const page = await context.newPage();
+    const githubRequests: string[] = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).hostname.endsWith('github.com')) githubRequests.push(request.url());
+    });
     await serveLocalCandidateAtProductionOrigin(page);
-    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [release] }));
-    await routePlatformStatus(page);
+    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: release }));
     await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
     await page.goto(`${productionOrigin}/`);
     const download = page.getByRole('link', { name: `Download for ${fixture.label}` });
     await expect(download).toHaveAttribute('href', release.assets?.find(({ name }) => name === fixture.asset)?.browser_download_url ?? '');
+    expect(githubRequests).toEqual(['https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest']);
     await context.close();
   }
 
   const fallbackContext = await browser.newContext({ userAgent: fixtures[2].userAgent });
   const fallbackPage = await fallbackContext.newPage();
   await serveLocalCandidateAtProductionOrigin(fallbackPage);
-  await fallbackPage.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [{ ...release, body: 'Unverified desktop builds.' }] }));
+  await fallbackPage.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: { ...release, body: 'Unverified desktop builds.' } }));
   await fallbackPage.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
   await fallbackPage.goto(`${productionOrigin}/`);
   const pending = fallbackPage.locator('#download-button');
@@ -369,20 +377,27 @@ test('@claim:platform-download resolves only complete verified matching assets f
   await expect(pending).toHaveAttribute('aria-disabled', 'true');
   await expect(fallbackPage.getByText('A verified Linux download is not published yet. The free browser demo remains available.')).toBeVisible();
   await fallbackContext.close();
-  const incomplete = verifiedReleaseFixture({
-    assets: verifiedReleaseFixture().assets?.filter((asset) => !['Project.Color.Beacons_0.1.2_aarch64.dmg', 'SHA256SUMS', 'BUILD-PROVENANCE.sigstore.json', 'platform-signatures.json'].includes(asset.name))
-  });
-  expect(isCompleteVerifiedRelease(incomplete)).toBe(false);
-  expect(verifiedReleaseIssues(incomplete)).toEqual(expect.arrayContaining([
-    'Missing SHA256SUMS.',
-    'Missing BUILD-PROVENANCE.sigstore.json.',
-    'Missing platform-signatures.json.',
-    expect.stringContaining('aarch64')
-  ]));
+  for (const requiredAsset of [
+    'Project.Color.Beacons_0.1.2_x64.dmg',
+    'Project.Color.Beacons_0.1.2_aarch64.dmg',
+    'Project.Color.Beacons_0.1.2_x64_en-US.msi',
+    'Project.Color.Beacons_0.1.2_x64-setup.exe',
+    'Project.Color.Beacons_0.1.2_amd64.AppImage',
+    'Project.Color.Beacons_0.1.2_amd64.deb',
+    'SHA256SUMS',
+    'latest.json',
+    'BUILD-PROVENANCE.sigstore.json',
+    'platform-signatures.json'
+  ]) {
+    const incomplete = verifiedReleaseFixture({
+      assets: verifiedReleaseFixture().assets?.filter((asset) => asset.name !== requiredAsset)
+    });
+    expect(isCompleteVerifiedRelease(incomplete), requiredAsset).toBe(false);
+  }
   expect(isCompleteVerifiedRelease(verifiedReleaseFixture())).toBe(true);
 });
 
-test('@claim:platform-signatures gates each desktop package on its own verified trust record', async ({ browser }) => {
+test('@claim:platform-signatures requires source provenance for every platform and reports optional operating-system signatures', async ({ browser }) => {
   const release = verifiedReleaseFixture();
   const record = platformSignatureFixture();
   expect(platformSignatureIssues(release, record)).toEqual([]);
@@ -391,25 +406,27 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
   expect(isPlatformInstallable(release, record, 'macOS')).toBe(true);
   expect(isPlatformInstallable(release, record, 'linux')).toBe(true);
 
-  const linuxOnly = structuredClone(record);
-  linuxOnly.platforms.windows!.authenticodeVerified = false;
-  linuxOnly.platforms.macOS!.codeSigned = false;
-  linuxOnly.platforms.macOS!.notarized = false;
-  const linuxOnlyRelease = verifiedReleaseFixture({
-    body: 'Source-verified desktop release. Linux provenance check: passed. Windows Authenticode check: unavailable. macOS signing and notarization check: unavailable.'
-  });
-  expect(platformSignatureIssues(linuxOnlyRelease, linuxOnly)).toEqual([]);
-  expect(isPlatformInstallable(linuxOnlyRelease, linuxOnly, 'linux')).toBe(true);
-  expect(platformInstallabilityIssues(linuxOnlyRelease, linuxOnly, 'windows')).toContain('The Windows package does not have a verified Authenticode signature.');
-  expect(platformInstallabilityIssues(linuxOnlyRelease, linuxOnly, 'macOS')).toContain('The macOS packages are not signed and notarized.');
+  const unsigned = structuredClone(record);
+  const unsignedRelease = verifiedReleaseFixture();
+  expect(platformSignatureIssues(unsignedRelease, unsigned)).toEqual([]);
+  expect(platformInstallabilityIssues(unsignedRelease, unsigned, 'windows')).toEqual([]);
+  expect(platformInstallabilityIssues(unsignedRelease, unsigned, 'macOS')).toEqual([]);
+  for (const platform of ['windows', 'macOS', 'linux'] as const) {
+    const unverified = structuredClone(record);
+    unverified.platforms[platform]!.provenanceVerified = false;
+    expect(isPlatformInstallable(release, unverified, platform), platform).toBe(false);
+  }
 
   const releaseFolder = mkdtempSync(join(tmpdir(), 'pcb-platform-release-'));
   const reportFolder = mkdtempSync(join(tmpdir(), 'pcb-platform-reports-'));
   try {
     for (const asset of release.assets ?? []) writeFileSync(join(releaseFolder, asset.name), 'fixture');
     writeFileSync(join(reportFolder, 'windows.json'), JSON.stringify({
-      ...linuxOnly.platforms.windows,
-      asset: 'Project Color Beacons_0.1.2_x64_en-US.msi'
+      ...unsigned.platforms.windows,
+      assets: [
+        'Project Color Beacons_0.1.2_x64_en-US.msi',
+        'Project Color Beacons_0.1.2_x64-setup.exe'
+      ]
     }));
     writeFileSync(join(reportFolder, 'mac-x64.json'), JSON.stringify({
       platform: 'macOS',
@@ -428,7 +445,11 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
     writeFileSync(join(reportFolder, 'windows.json'), JSON.stringify(windowsReport));
     execFileSync('node', ['scripts/make-platform-signature-record.mjs', releaseFolder, reportFolder, 'v0.1.2'], { cwd: process.cwd() });
     const generated = JSON.parse(readFileSync(join(releaseFolder, 'platform-signatures.json'), 'utf8')) as PlatformSignatureRecord;
-    expect(generated.platforms.windows?.asset).toBe('Project.Color.Beacons_0.1.2_x64_en-US.msi');
+    expect(generated.platforms.windows?.assets).toEqual(expect.arrayContaining([
+      'Project.Color.Beacons_0.1.2_x64_en-US.msi',
+      'Project.Color.Beacons_0.1.2_x64-setup.exe'
+    ]));
+    expect(generated.platforms.windows?.provenanceVerified).toBe(true);
     expect(generated.platforms.windows?.authenticodeVerified).toBe(false);
     expect(generated.platforms.macOS).toMatchObject({ codeSigned: false, notarized: false });
     expect(generated.platforms.macOS?.assets).toHaveLength(2);
@@ -443,7 +464,9 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
       join(releaseFolder, 'release-body.md')
     ], { cwd: process.cwd() });
     expect(readFileSync(join(releaseFolder, 'release-body.md'), 'utf8')).toContain([
-      'Linux provenance check: passed.',
+      'Linux source provenance check: passed.',
+      'Windows source provenance check: passed.',
+      'macOS source provenance check: passed.',
       'Windows Authenticode check: unavailable.',
       'macOS signing and notarization check: unavailable.'
     ].join('\n'));
@@ -453,30 +476,25 @@ test('@claim:platform-signatures gates each desktop package on its own verified 
   }
 
   for (const fixture of [
-    { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', allowed: true, label: 'Linux' },
-    { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', allowed: false, label: 'Windows' },
-    { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', allowed: false, label: 'macOS' }
+    { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', pattern: /\.AppImage$/, label: 'Linux' },
+    { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', pattern: /\.msi$/, label: 'Windows' },
+    { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', pattern: /\.dmg$/, label: 'macOS' }
   ]) {
     const context = await browser.newContext({ userAgent: fixture.userAgent });
     const page = await context.newPage();
     await serveLocalCandidateAtProductionOrigin(page);
-    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [linuxOnlyRelease] }));
-    await routePlatformStatus(page, linuxOnly);
+    await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: unsignedRelease }));
     await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [] } }));
     await page.goto(`${productionOrigin}/`);
-    if (fixture.allowed) {
-      await expect(page.getByRole('link', { name: `Download for ${fixture.label}` })).toHaveAttribute('href', /\.AppImage$/);
-    } else {
-      await expect(page.locator('#download-button')).toHaveText(`Verified ${fixture.label} download pending`);
-      await expect(page.locator('#download-button')).not.toHaveAttribute('href', /.+/);
-    }
+    await expect(page.getByRole('link', { name: `Download for ${fixture.label}` })).toHaveAttribute('href', fixture.pattern);
+    if (fixture.label !== 'Linux') await expect(page.locator('#download-state')).toContainText('unsigned; your system may show a warning');
     await context.close();
   }
 
   const incomplete = structuredClone(record) as unknown as {
     tag: string;
     githubProvenanceVerified: boolean;
-    platforms: { windows: { asset: string; authenticodeVerified?: boolean } };
+    platforms: { windows: { assets: string[]; provenanceVerified: boolean; authenticodeVerified?: boolean } };
   };
   delete incomplete.platforms.windows.authenticodeVerified;
   expect(platformSignatureIssues(release, incomplete as unknown as PlatformSignatureRecord)).toContain('The Windows signing status record is incomplete.');
@@ -531,8 +549,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   const unavailableContext = await browser.newContext();
   const unavailableSite = await unavailableContext.newPage();
   await serveLocalCandidateAtProductionOrigin(unavailableSite);
-  await unavailableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [verifiedReleaseFixture()] }));
-  await routePlatformStatus(unavailableSite);
+  await unavailableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: verifiedReleaseFixture() }));
   await unavailableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
     json: { data: [{ slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' }] }
   }));
@@ -544,8 +561,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   const availableSite = await availableContext.newPage();
   await serveLocalCandidateAtProductionOrigin(availableSite);
   const checkoutUrl = 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout';
-  await availableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [verifiedReleaseFixture()] }));
-  await routePlatformStatus(availableSite);
+  await availableSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: verifiedReleaseFixture() }));
   await availableSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
     json: { data: [
       { slug: 'another-product', checkout_url: 'https://example.test/checkout', price_minor: 999, currency: 'USD' },
@@ -560,7 +576,7 @@ test('@claim:checkout-availability shows checkout only for an active matching ca
   const unsignedContext = await browser.newContext();
   const unsignedSite = await unsignedContext.newPage();
   await serveLocalCandidateAtProductionOrigin(unsignedSite);
-  await unsignedSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({ json: [verifiedReleaseFixture({ body: 'Unverified desktop builds.' })] }));
+  await unsignedSite.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({ json: verifiedReleaseFixture({ body: 'Unverified desktop builds.' }) }));
   await unsignedSite.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({ json: { data: [
     { slug: 'project-color-beacons', checkout_url: checkoutUrl, price_minor: 2400, currency: 'USD' }
   ] } }));
@@ -644,10 +660,9 @@ test('landing purchase state reflows at 390 pixels with 200 percent text', async
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await serveLocalCandidateAtProductionOrigin(page);
-  await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({
-    json: [verifiedReleaseFixture()]
+  await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases/latest', (route) => route.fulfill({
+    json: verifiedReleaseFixture()
   }));
-  await routePlatformStatus(page);
   await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
     json: { data: [{
       slug: 'project-color-beacons',

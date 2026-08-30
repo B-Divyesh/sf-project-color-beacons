@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-30 after repair 7. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-30 after repair 9. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -27,9 +27,9 @@ Checked 2026-08-30 after repair 7. Hyphenated terms, paths, prices, and versions
 | 9 | privacy | Project data stays on this device during normal use. |
 | 12 | pricing | Color, name, symbol, and confirmation are free for up to three projects. |
 | 7 | pricing | A valid license removes the project limit. |
-| 8 | download state | A verified Linux download is not published yet. |
+| 8 | download state | A verified [platform] download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 5 | release state pattern | v0.1.4 · [package filename] · verified package origin. |
+| 12 | release state pattern | v0.1.5 · [package filename] · verified package origin · unsigned; your system may show a warning. |
 | 10 | purchase state | License purchases open with a verified package for this platform. |
 | 4 | purchase detail | $24 one-time · unlimited projects. |
 | 5 | purchase state | License purchases are being prepared. |
@@ -54,7 +54,7 @@ Checked 2026-08-30 after repair 7. Hyphenated terms, paths, prices, and versions
 | 2 | eyebrow | Desktop app |
 | 4 | h2 | Start with three projects |
 | 2 | action | Verify license |
-| 4 | unavailable action | Verified Linux download pending |
+| 4 | unavailable action | Verified [platform] download pending |
 
 ## Demo and error copy checked
 
@@ -65,6 +65,8 @@ The demo uses “three beacon cues” for color, name, and symbol. It calls the 
 Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent from headings and labels. The persistence sentence matches `beacon-stability`. Release-manifest, release-matrix, GitHub-provenance, platform-signature, reset, platform-selection, and checkout-release statements each have a tagged claim test.
 
 The release status uses “verified package origin” for GitHub provenance. It reserves “signed” and “notarized” for operating-system trust checks.
+
+The README states that every platform needs a complete, source-verified release. It also discloses unsigned Windows and macOS system warnings.
 
 ## Terminology
 

@@ -15,7 +15,20 @@ for (const name of files) {
   const url = `https://github.com/${repository}/releases/download/${tag}/${encodeURIComponent(basename(name))}`;
   if (/\.(dmg|app\.tar\.gz)$/i.test(name)) platforms.macos.push({ name, url });
   if (/\.(msi|exe|nsis\.zip)$/i.test(name)) platforms.windows.push({ name, url });
-  if (/\.(AppImage|deb)$/i.test(name)) platforms.linux.push({ name, url });
+  if (/\.(AppImage|deb|rpm)$/i.test(name)) platforms.linux.push({ name, url });
+}
+
+const requirements = {
+  macos: [/x64\.dmg$/i, /aarch64\.dmg$/i],
+  windows: [/\.msi$/i, /-setup\.exe$/i],
+  linux: [/\.AppImage$/i, /\.deb$/i]
+};
+for (const [platform, patterns] of Object.entries(requirements)) {
+  for (const pattern of patterns) {
+    if (!platforms[platform].some(({ name }) => pattern.test(name))) {
+      throw new Error(`Missing required ${platform} package matching ${pattern}.`);
+    }
+  }
 }
 
 await writeFile(`${folder}/SHA256SUMS`, `${sums.join('\n')}\n`);

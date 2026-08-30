@@ -84,7 +84,7 @@ jobs:
           releaseBody: |
             Source-verified desktop release.
 
-            GitHub records which repository, workflow, commit, and tag produced each package. See platform-signatures.json for Windows signing and macOS signing and notarization status. Packages without an operating-system signature may show a warning.
+            Publication is pending checksum and source-provenance verification for every required platform package.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
@@ -105,7 +105,7 @@ jobs:
           releaseBody: |
             Source-verified desktop release.
 
-            GitHub records which repository, workflow, commit, and tag produced each package. See platform-signatures.json for Windows signing and macOS signing and notarization status. Packages without an operating-system signature may show a warning.
+            Publication is pending checksum and source-provenance verification for every required platform package.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
@@ -113,12 +113,12 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          $installer = Get-ChildItem -Path 'src-tauri/target' -Recurse -File | Where-Object { $_.FullName -match '[\\/]bundle[\\/]' -and $_.Extension -in '.msi', '.exe' } | Select-Object -First 1
-          if (-not $installer) { throw 'No Windows installer was produced.' }
-          $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
-          $verified = $signature.Status -eq 'Valid'
-          if ($env:WINDOWS_SIGNING_CONFIGURED -eq 'true' -and -not $verified) { throw "Windows signature verification failed: $($signature.Status)" }
-          @{ platform = 'windows'; asset = $installer.Name; authenticodeVerified = $verified } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
+          $installers = @(Get-ChildItem -Path 'src-tauri/target' -Recurse -File | Where-Object { $_.FullName -match '[\\/]bundle[\\/]' -and $_.Extension -in '.msi', '.exe' })
+          if ($installers.Count -lt 2) { throw 'Both Windows MSI and executable installers are required.' }
+          $statuses = @($installers | ForEach-Object { Get-AuthenticodeSignature -FilePath $_.FullName })
+          $verified = @($statuses | Where-Object { $_.Status -ne 'Valid' }).Count -eq 0
+          if ($env:WINDOWS_SIGNING_CONFIGURED -eq 'true' -and -not $verified) { throw "A Windows installer signature verification failed." }
+          @{ platform = 'windows'; assets = @($installers.Name); authenticodeVerified = $verified } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
       - name: Record macOS signing and notarization status
         if: matrix.platform == 'macos-latest'
         shell: bash
@@ -173,7 +173,7 @@ jobs:
           subject-checksums: release-assets/SHA256SUMS
       - name: Add the portable Sigstore bundle
         run: cp "${{ steps.provenance.outputs.bundle-path }}" release-assets/BUILD-PROVENANCE.sigstore.json
-      - name: Record verified platform signatures
+      - name: Record verified source provenance and platform signatures
         run: node scripts/make-platform-signature-record.mjs release-assets signature-reports "${GITHUB_REF_NAME}"
       - name: Publish truthful platform status
         env:

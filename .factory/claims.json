@@ -78,17 +78,17 @@
   },
   {
     "id": "platform-download",
-    "claim": "The landing page selects a matching package only after its platform trust check and every release record pass.",
+    "claim": "The landing page selects a source-verified package for each desktop platform only when every required release asset is present.",
     "where": "landing download section, README",
     "test": "npm test -- --grep @claim:platform-download",
-    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents plus complete and incomplete recorded GitHub release responses"
+    "sandbox": "three fresh browser contexts with macOS, Windows, and Linux user agents; unsigned source-verified and incomplete GitHub release responses; assert only the CORS-safe GitHub API is fetched"
   },
   {
     "id": "platform-signatures",
-    "claim": "Linux downloads require verified GitHub provenance; Windows requires Authenticode; macOS requires signing and notarization.",
+    "claim": "Every platform download requires verified GitHub provenance; Windows and macOS operating-system signature status stays explicit.",
     "where": "README, release workflow, download gate",
     "test": "npm test -- --grep @claim:platform-signatures",
-    "sandbox": "complete recorded release; unsigned Windows and macOS records keep those downloads closed without blocking verified Linux"
+    "sandbox": "complete recorded release; unsigned Windows and macOS packages remain installable with warnings; false provenance closes each platform"
   },
   {
     "id": "settings-preserved",

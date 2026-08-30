@@ -49,13 +49,13 @@ The release workflow targets these packages when a `v*` tag is pushed:
 
 The workflow publishes `SHA256SUMS`, `latest.json`, a platform-status record, and a GitHub provenance file.
 
-GitHub records the repository, workflow, commit, and tag for each package.
+GitHub records the repository, workflow, commit, tag, and checksum for every package.
 
-The landing page detects the operating system and resolves a matching package through the GitHub API.
+The landing page detects the operating system and reads release metadata from the CORS-safe GitHub API.
 
-Linux downloads require verified GitHub provenance. Windows requires Authenticode. macOS requires signing and notarization.
+Every platform requires verified GitHub provenance and a complete release before its download appears.
 
-The release records missing owner certificates honestly. One platform's missing certificate does not block a verified package for another platform.
+The release records missing owner certificates honestly. Unsigned Windows and macOS packages remain available with an operating-system warning.
 
 After publishing a release, run these independent checks. The first checks release files, checksums, the manifest, and GitHub's package-origin record.
 
@@ -66,7 +66,7 @@ npm run test:release
 gh attestation verify <downloaded-package> --repo B-Divyesh/sf-project-color-beacons
 ```
 
-Windows and macOS signing need owner certificates. Their downloads remain closed until the workflow verifies those platform signatures.
+Windows and macOS signing need owner certificates. The release status and landing page disclose when those signatures are unavailable.
 
 ## Price and privacy
 
