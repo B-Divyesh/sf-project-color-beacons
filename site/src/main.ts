@@ -89,6 +89,8 @@ function notFound() {
 type RouteHistoryState = { scrollY?: number };
 
 function renderRoute(path = location.pathname, focusHeading = false, restoreScroll = 0) {
+  restoringScroll = true;
+  cancelAnimationFrame(scrollFrame);
   const demoQuery = path === '/' && new URLSearchParams(location.search).get('demo') === '1';
   const known = Object.prototype.hasOwnProperty.call(titles, path);
   const route = demoQuery ? '/demo' : known ? path : '/404';
@@ -109,7 +111,8 @@ function renderRoute(path = location.pathname, focusHeading = false, restoreScro
   if (focusHeading) heading?.focus({ preventScroll: true });
   const announcer = document.getElementById('route-status');
   if (announcer) announcer.textContent = heading?.textContent ?? '';
-  requestAnimationFrame(() => scrollTo({ top: restoreScroll, behavior: 'auto' }));
+  scrollTo({ top: restoreScroll, behavior: 'auto' });
+  requestAnimationFrame(() => { restoringScroll = false; });
 }
 
 function navigate(path: string) {
@@ -132,7 +135,9 @@ document.addEventListener('click', (event) => {
 history.scrollRestoration = 'manual';
 if (!history.state) history.replaceState({ scrollY: window.scrollY } satisfies RouteHistoryState, '', location.href);
 let scrollFrame = 0;
+let restoringScroll = false;
 window.addEventListener('scroll', () => {
+  if (restoringScroll) return;
   cancelAnimationFrame(scrollFrame);
   scrollFrame = requestAnimationFrame(saveScrollPosition);
 }, { passive: true });
