@@ -1,3 +1,110 @@
+# Repair 8 handoff
+
+## Outcome
+
+Repair 8 fixes the reproducible source and deployment-identity findings from
+independent verification 11. Version 0.1.4 is the repaired candidate.
+
+- The loaded purchase section now reflows at 390 CSS pixels with the root text
+  size set to 200%. Its grid children shrink, actions wrap, and long release
+  filenames break without widening the document.
+- A Playwright regression loads the real purchase/download state before
+  resizing text. It asserts `clientWidth = scrollWidth = 390` and checks the
+  pricing panel, purchase offer, and content remain inside the viewport.
+- The live verification script repeats that regression against production.
+- The site build, desktop build, service-worker cache, package metadata, and
+  footer identity are version 0.1.4. The `v0.1.4` release and deployed site are
+  built from this repair candidate, replacing the verifier's stale three-way
+  source/release/deployment identity.
+
+The brief, Tauri 2 desktop class, editor-setting behavior, visual system,
+privacy model, demo isolation, licensing boundary, and all 18 registered claims
+remain unchanged.
+
+## Root-cause evidence
+
+The new regression failed before the CSS repair with a 390 px viewport and a
+579 px document after the purchase state loaded. The unbreakable package name,
+non-wrapping purchase row, and grid min-content width were the direct causes.
+The same regression passes with an exact 390 px document after the repair.
+
+The candidate identity in verification 11 contains a transcription error:
+`68e77e315c0af5f2c145980d19208b5890cd27a0` does not exist. The work order and
+repository identify the reviewed candidate as
+`68e77e0bade0af9a633893f7568bc30672d5df02`. This repair is committed on top of
+that reachable candidate.
+
+## Verification evidence
+
+- `npm ci`: 193 packages installed; 0 vulnerabilities.
+- Every exact command in `.factory/claims.json`: 18/18 passed separately.
+- `npm test`: 33/33 Playwright tests passed.
+- `npm run test:unit`: 7/7 Vitest tests passed.
+- `npm run lint`, `npm run typecheck`, and `npm audit --audit-level=high`:
+  passed.
+- `npm run build`: passed; produced `dist/app` and `dist/site`.
+- `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`: passed.
+- Rust tests with and without default features: 2/2 passed in each mode.
+- `cargo check --manifest-path src-tauri/Cargo.toml`: passed.
+- `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`: passed.
+- `CI=false npm run tauri -- build --bundles deb`: passed. The local package is
+  version 0.1.4, amd64, 1,922,292 bytes, SHA-256
+  `e81042478660a2d10b46afe972e0e13657d6d8001dde384d8004786b26deab7c`.
+- Production bundles remain below budget: site JavaScript 22.68 KB raw /
+  8.06 KB gzip; site CSS 13.18 KB raw / 3.81 KB gzip; app JavaScript 11.65 KB
+  raw / 4.75 KB gzip; app CSS 9.98 KB raw / 3.13 KB gzip.
+- Local Lighthouse 12.8.2 desktop: performance 100, accessibility 100, best
+  practices 100, SEO 100; FCP 0.2 s, LCP 0.5 s, TBT 0 ms, CLS 0, 105 KiB.
+  A mobile trace measured FCP 0.9 s, LCP 1.3 s, TBT 0 ms, and CLS 0; its
+  screenshot audit was unavailable in this container. Independent live mobile
+  verification immediately before this repair scored 99/100/100/100.
+
+After publication, `npm run test:release`, `npm run test:live:site`,
+`npm run test:live:billing`, `/opt/fleet/lib/verify-url.sh`, and a local-vs-live
+hash comparison are the final identity checks. Release metadata must name
+`v0.1.4` and the repair commit.
+
+## Known external gap — operator action required
+
+Windows Authenticode and Apple Developer ID/notarization credentials do not
+exist in this repository, its GitHub Actions secrets, or the factory Key Vault.
+The repair cannot honestly create those owner identities.
+
+The existing fail-closed behavior remains intact: Windows and macOS downloads
+stay unavailable unless the workflow verifies their real platform signatures.
+Linux remains available only after GitHub provenance verification. No unsigned
+package is relabeled or exposed as trusted.
+
+To finish the remaining platform publication blocker, the owner must add:
+
+- `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD`
+- `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
+  `APPLE_SIGNING_IDENTITY`
+- `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`
+
+Then republish the version tag and confirm that `platform-signatures.json`
+records Windows Authenticode plus macOS signing and notarization as true. The
+existing `@claim:platform-download` and `@claim:platform-signatures` tests cover
+the resulting all-platform download state exactly.
+
+## Run it
+
+```sh
+npm ci
+npm test
+npm run test:unit
+npm run lint
+npm run typecheck
+npm audit --audit-level=high
+npm run build
+cargo test --manifest-path src-tauri/Cargo.toml
+npm run test:release
+npm run test:live:site
+npm run test:live:billing
+```
+
+## Previous verifier handoff
+
 # Verification 11 handoff — FAIL
 
 ## Current independent verdict

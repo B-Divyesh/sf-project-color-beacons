@@ -640,6 +640,41 @@ test('landing fits a 390 pixel screen and its first action works', async ({ brow
   await page.close();
 });
 
+test('landing purchase state reflows at 390 pixels with 200 percent text', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await serveLocalCandidateAtProductionOrigin(page);
+  await page.route('https://api.github.com/repos/B-Divyesh/sf-project-color-beacons/releases?per_page=10', (route) => route.fulfill({
+    json: [verifiedReleaseFixture()]
+  }));
+  await routePlatformStatus(page);
+  await page.route('https://api.sociobot.in/api/v1/products', (route) => route.fulfill({
+    json: { data: [{
+      slug: 'project-color-beacons',
+      checkout_url: 'https://api.sociobot.in/api/v1/products/project-color-beacons/checkout',
+      price_minor: 2400,
+      currency: 'USD'
+    }] }
+  }));
+
+  await page.goto(`${productionOrigin}/`);
+  await expect(page.getByRole('link', { name: 'Buy a $24 license' })).toBeVisible();
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+
+  await expect.poll(() => page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth
+  }))).toEqual({ clientWidth: 390, scrollWidth: 390 });
+
+  for (const selector of ['.price-slab', '.price-slab > div', '.purchase-offer']) {
+    const box = await page.locator(selector).first().boundingBox();
+    expect(box, selector).not.toBeNull();
+    expect(box?.x ?? -1, selector).toBeGreaterThanOrEqual(0);
+    expect((box?.x ?? 0) + (box?.width ?? 391), selector).toBeLessThanOrEqual(390);
+  }
+  await context.close();
+});
+
 test('one-click mobile demo opens with a completed result and full sample row', async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto('http://127.0.0.1:4173/');

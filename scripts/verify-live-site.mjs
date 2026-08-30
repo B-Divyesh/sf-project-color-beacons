@@ -113,6 +113,9 @@ try {
   const priceFact = landing.getByText('Three projects are free; unlimited projects cost $24 once.');
   const priceFactBox = await priceFact.boundingBox();
   assert.ok(priceFactBox && priceFactBox.y + priceFactBox.height <= 844, 'The $24 price fact must fit in the first mobile viewport');
+  await landing.getByRole('link', { name: 'Buy a $24 license' }).waitFor();
+  await landing.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  assert.equal(await landing.evaluate(() => document.documentElement.scrollWidth), 390, 'Loaded pricing must reflow at 390px and 200% text');
   await landingContext.close();
 
   const reducedContext = await browser.newContext({ reducedMotion: 'reduce' });
@@ -150,10 +153,10 @@ try {
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
   const download = billing.locator('#download-button');
   await download.getByText('Download for Linux').waitFor();
-  assert.match(await download.getAttribute('href'), /Project\.Color\.Beacons_0\.1\.3_amd64\.AppImage$/);
+  assert.match(await download.getAttribute('href'), new RegExp(`Project\\.Color\\.Beacons_${APP_VERSION.replaceAll('.', '\\.')}.*\\.AppImage$`));
   assert.equal(await download.getAttribute('aria-disabled'), null);
   assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 1);
-  assert.match(await billing.locator('#download-state').innerText(), /v0\.1\.3 .* verified package origin/);
+  assert.match(await billing.locator('#download-state').innerText(), new RegExp(`v${APP_VERSION.replaceAll('.', '\\.')} .* verified package origin`));
   await billingContext.close();
 
   const returnContext = await browser.newContext();

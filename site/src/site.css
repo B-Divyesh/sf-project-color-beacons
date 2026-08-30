@@ -47,11 +47,13 @@
 .boundary-list strong { color: var(--boundary-accent); }
 
 .price-slab { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding: 36px; }
+.price-slab > * { min-width: 0; }
 .price-slab h2 { max-width: 14ch; }
 .price { text-align: right; }
 .price strong { font: 700 3.2rem Georgia, serif; display: block; }
 .price span { color: var(--silt); }
-.purchase-offer { display: inline-flex; align-items: center; gap: 10px; color: var(--silt); }
+.price-slab .actions > *, .purchase-offer > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.purchase-offer { display: flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; max-width: 100%; color: var(--silt); }
 .license-restore { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--seam); display: grid; grid-template-columns: 1fr auto; gap: 12px; }
 .license-restore label { grid-column: 1 / -1; font-weight: 700; }
 .license-restore input { min-height: 46px; min-width: 0; border: 1px solid var(--seam); border-radius: 10px; padding: 10px 12px; background: var(--frost); color: var(--ink); }
@@ -81,7 +83,7 @@
 .config-output summary { min-height: 44px; display: flex; align-items: center; color: var(--glacial); font-weight: 720; cursor: pointer; }
 .config-output pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--ink); color: var(--porcelain); padding: 16px; border-radius: 12px; max-height: 330px; overflow: auto; }
 
-.download-state { color: var(--silt); font-size: .9rem; }
+.download-state { color: var(--silt); font-size: .9rem; overflow-wrap: anywhere; }
 #download-button[aria-disabled="true"] { cursor: wait; opacity: .72; transform: none; box-shadow: none; }
 
 @media (max-width: 800px) {
@@ -102,6 +104,7 @@
   .product-preview { padding: 16px; }
   .preview-projects { grid-template-columns: 1fr; }
   .step { grid-template-columns: 1fr; }
+  .price-slab { gap: 24px; padding: 20px; }
   .demo-main { padding-block: 20px 56px; }
   .demo-intro { grid-template-columns: 1fr; gap: 0; }
   .demo-intro h1 { font-size: 2.25rem; margin-bottom: 12px; }

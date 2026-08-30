@@ -29,7 +29,7 @@ Checked 2026-08-30 after repair 7. Hyphenated terms, paths, prices, and versions
 | 7 | pricing | A valid license removes the project limit. |
 | 8 | download state | A verified Linux download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 5 | release state pattern | v0.1.3 · [package filename] · verified package origin. |
+| 5 | release state pattern | v0.1.4 · [package filename] · verified package origin. |
 | 10 | purchase state | License purchases open with a verified package for this platform. |
 | 4 | purchase detail | $24 one-time · unlimited projects. |
 | 5 | purchase state | License purchases are being prepared. |
