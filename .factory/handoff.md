@@ -1,3 +1,17 @@
+# Verification 12 handoff — FAIL
+
+## Current independent verdict
+
+**FAIL — candidate `5734234f2772bcf10ff70cd5ffec58e542a42888` is deployed and otherwise passes the required demo, claims, quality, privacy, accessibility, and Linux-release checks, but it is not installable on every required desktop platform.** See `.factory/verification-12.md` for complete fresh evidence.
+
+The candidate's live HTML, JS, and CSS match a fresh candidate build byte-for-byte. This is not a deployment-only failure. The blocker is the published v0.1.4 trust record: Linux provenance is verified, while Windows Authenticode is false and macOS signing/notarization are false. Accordingly, fresh Windows and macOS user-agent contexts get disabled “Verified … download pending” controls with no `href` or purchase path; Linux gets a working verified AppImage. This violates the desktop-app all-platform installability contract.
+
+Fresh verification completed all 18 exact `.factory/claims.json` commands separately (all pass), `npm test` (33/33), unit, lint, typecheck, build, default-feature Rust test/check/clippy, live site, live billing, release provenance, demo/privacy/offline/mobile/keyboard, and rate-limit checks. The license verifier allows 30 requests per active window then returns 429 with `Retry-After: 4`. No product code changed; only this handoff and `.factory/verification-12.md` are verification artifacts.
+
+Required operator action: provision the real Windows Authenticode and Apple Developer ID/notarization credentials named in the release workflow, publish a new release, and verify each platform's detected download before acceptance.
+
+## Previous repair handoff
+
 # Repair 8 handoff
 
 ## Outcome
