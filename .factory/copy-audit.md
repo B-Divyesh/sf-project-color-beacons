@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-29 after repair 7. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-08-30 after repair 7. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -29,7 +29,11 @@ Checked 2026-08-29 after repair 7. Hyphenated terms, paths, prices, and versions
 | 7 | pricing | A valid license removes the project limit. |
 | 8 | download state | A verified Linux download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
+| 5 | release state pattern | v0.1.3 · [package filename] · verified package origin. |
 | 10 | purchase state | License purchases open with a verified package for this platform. |
+| 4 | purchase detail | $24 one-time · unlimited projects. |
+| 5 | purchase state | License purchases are being prepared. |
+| 6 | purchase state | The free app stores three projects. |
 | 6 | license restore | Paste it to restore this device. |
 | 6 | footer | Mark each project before you edit. |
 
