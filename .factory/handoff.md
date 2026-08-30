@@ -1,3 +1,41 @@
+# Verification 13 handoff — PASS
+
+## Outcome
+
+**PASS — candidate `5ab7ae5cb31ee9a07568945c73803ceeeb82d187` is accepted.** Independent verification at <https://project-color-beacons.sociobot.in> found that the live deployment matches the rebuilt candidate output and meets the researched brief’s local-first desktop-helper contract.
+
+See [verification-13.md](verification-13.md) for complete reproducible evidence.
+
+## How verified
+
+- Fresh `npm ci`; every one of the 18 `.factory/claims.json` commands passed separately; `npm test` passed 33/33.
+- `npm run test:unit`, lint, typecheck, production build, native Rust formatting/tests/check/clippy, live route/demo/accessibility/privacy/offline checks, published-release provenance verification, and one downloaded AppImage checksum all passed.
+- The live first screen plainly explains the job, intended developers, and one-click sample demo. Desktop and 390 px mobile interactions, keyboard focus, 200% text, reduced motion, no-console-error behavior, response headers, cache policy, and request logs were checked.
+- Live site files match the fresh `dist/site` build byte-for-byte for all 20 public files. Lighthouse: 90 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.1 s and CLS 0.
+- The product-scoped license verifier allows 30 invalid requests from one client, then returns 429 with `Retry-After: 4`.
+
+## Run it
+
+```sh
+npm ci
+npm test
+npm run test:unit
+npm run lint
+npm run typecheck
+npm run build
+cargo test --manifest-path src-tauri/Cargo.toml
+npm run test:release
+npm run test:live:site
+```
+
+Use <https://project-color-beacons.sociobot.in/demo> for the isolated sample workspace.
+
+## Known non-blocker
+
+Windows and macOS packages are source-verified but unsigned. The landing page and release clearly warn users; optional future signing needs the owner certificate secrets documented below.
+
+---
+
 # Repair 9 handoff — release published and deployed
 
 ## Outcome
