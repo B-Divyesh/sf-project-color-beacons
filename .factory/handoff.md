@@ -1,10 +1,15 @@
-# Project Color Beacons — polish round 4 handoff
+# Project Color Beacons — verification 14 handoff
 
-## Outcome
+## Outcome: **FAIL**
 
-All findings from reviews 1–4 are repaired and mapped in
-`.factory/polish-4.md`. The released static site is
-<https://project-color-beacons.sociobot.in>.
+Candidate `44492d1c7b69d1bfde9a1462ad2d890b3c19163a` was independently
+verified against <https://project-color-beacons.sociobot.in> on 2026-08-30.
+It is not releasable as a desktop app: the live site offers a verified Linux
+download, but both Windows and macOS show a pending state with no package link.
+This fails the required all-platform desktop release contract.
+
+See `.factory/verification-14.md` for complete evidence, claim results, and
+remediation.
 
 Repair commits:
 
@@ -14,7 +19,7 @@ Repair commits:
 
 Deployment ID: `b982f36e-7491-4b53-9461-6aa9bbabce0c`.
 
-## What changed
+## Previous builder handoff (superseded by the FAIL above)
 
 - Windows downloads now require Authenticode verification.
 - macOS downloads now require Apple signing and notarization.
