@@ -1,0 +1,38 @@
+{
+  "verifiedAt": "2026-08-30T06:40:00Z",
+  "candidateCommit": "a500849268c86715715cbd1ecdb676f67afff524",
+  "deploymentId": "b982f36e-7491-4b53-9461-6aa9bbabce0c",
+  "liveUrl": "https://project-color-beacons.sociobot.in",
+  "routes": {
+    "/": 200,
+    "/demo": 200,
+    "/privacy": 200,
+    "/terms": 200,
+    "/404.html": 200,
+    "/not-a-page": 404
+  },
+  "verifyUrl": {
+    "consoleErrors": 0,
+    "titlePresent": true,
+    "lang": "en",
+    "h1PerRoute": 1,
+    "mainPerRoute": true,
+    "imagesMissingAlt": 0,
+    "buttonsMissingNames": 0
+  },
+  "lighthouseMobile": {
+    "performance": 99,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "largestContentfulPaint": "1.7 s",
+    "cumulativeLayoutShift": 0,
+    "totalBlockingTime": "70 ms",
+    "transferSize": "103 KiB"
+  },
+  "releaseV0.1.5": {
+    "linux": "installable",
+    "windows": "withheld: Authenticode verification is absent",
+    "macOS": "withheld: Apple signing and notarization are absent"
+  }
+}

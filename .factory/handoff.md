@@ -1,34 +1,77 @@
-# Review 4 handoff — FAIL
+# Project Color Beacons — polish round 4 handoff
 
 ## Outcome
 
-Independent review of the live product failed. No product code was changed.
+All findings from reviews 1–4 are repaired and mapped in
+`.factory/polish-4.md`. The released static site is
+<https://project-color-beacons.sociobot.in>.
 
-Blocking finding: the landing page again links to and sells unsigned Windows and macOS packages. This regresses historical findings `F-1-9`, `F-2-2`, and `F-3-1`; see [review-4.md](review-4.md).
+Repair commits:
 
-Additional findings: the landing license field falsely promises to restore the device, and the README uses unexplained “CORS-safe” jargon.
+- `db35e4933b73d11052af84461192c43b77a73d9d` — platform trust gates, license handoff, claims, copy, tests, and release workflow.
+- `a500849268c86715715cbd1ecdb676f67afff524` — deterministic route scroll restoration and reduced-motion handling.
 
-## What was verified
+Deployment ID: `b982f36e-7491-4b53-9461-6aa9bbabce0c`.
 
-- Fresh browser contexts at 390 × 844 and 1440 × 900; clear first screen and one-click completed demo.
-- Demo storage isolation, reset/disposal, offline reload, request log, keyboard, accessibility, route history, 404 behavior, metadata, links, and distinct visual system.
-- Fresh clone: all 18 registered claim commands passed; full `npm test` passed 33/33; `npm run test:unit` passed 7/7; typecheck and production build passed.
-- Live Windows/macOS user-agent checks found direct package links and a purchase link. Release `v0.1.5` records `authenticodeVerified: false`, `codeSigned: false`, and `notarized: false`.
+## What changed
 
-## Required next steps
+- Windows downloads now require Authenticode verification.
+- macOS downloads now require Apple signing and notarization.
+- The release workflow stops before publication when those credentials or checks are missing.
+- The landing page, checkout, and install scripts withhold untrusted packages. Current v0.1.5 Windows/macOS artifacts are not linked or sold.
+- Website license verification and storage were removed. A checkout return can be copied once and pasted into the desktop License dialog.
+- Added the tagged `desktop-license-recovery` claim and expanded trust, checkout, mobile, privacy, and live tests.
+- Replaced README jargon, updated the 66-character verb-first catalog description, and refreshed the copy audit.
+- Removed implicit smooth route scrolling so Back and Forward restore each entry exactly. Explicit preview motion respects reduced-motion settings.
+- Preserved the glacial ceramic identity, Tauri desktop class, local-first app, and isolated `demo:` storage.
 
-1. Publish verified Windows Authenticode and Apple signed/notarized packages, or remove Windows/macOS links and purchase access until they exist.
-2. Replace the web license-restoration promise with a truthful desktop recovery flow and add an end-to-end claim test.
-3. Replace “CORS-safe” with plain language in the README.
+## Verification
 
-## Reproduce
+Clean clone `/tmp/project-color-beacons-clean.mrJY3m` at `a500849268c86715715cbd1ecdb676f67afff524`:
+
+- `npm ci` — 193 packages, 0 vulnerabilities.
+- Every one of the 19 `.factory/claims.json` commands — passed separately.
+- `npm test -- --reporter=line` — 34/34 passed.
+- `npm run test:unit` — 7/7 passed.
+- `npm run typecheck` — passed.
+- `npm run lint` — passed.
+- `npm run build` — passed; site JS 22.92 kB raw / 8.11 kB gzip, CSS 13.25 kB raw / 3.84 kB gzip.
+- `npm audit --audit-level=moderate` — 0 vulnerabilities.
+- `cargo fmt --manifest-path src-tauri/Cargo.toml --check` — passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml --no-default-features` — 2/2 passed.
+
+Additional checks:
+
+- `CI=false npm run tauri -- build --bundles deb` — produced `src-tauri/target/release/bundle/deb/Project Color Beacons_0.1.5_amd64.deb`.
+- `npm run test:release` — v0.1.5 package checksums, manifest, GitHub provenance, and platform records passed. Result: Linux installable; Windows/macOS withheld.
+- `npm run test:live:site` — routes, zero-violation Axe scans, mobile, keyboard, history, privacy, demo disposal, offline reload, trust gates, and license handoff passed.
+- `npm run test:live:billing` — one active $24 product and hosted checkout redirect passed.
+- `/opt/fleet/lib/verify-url.sh` — `/`, `/demo`, `/privacy`, and `/terms` each had a title, `lang=en`, one h1, main, alt text, and no console errors.
+- Cold unknown route — `/not-a-page` returned HTTP 404 with the designed 404 page.
+- Lighthouse mobile — performance 99, accessibility 100, best practices 100, SEO 100; LCP 1.7 s, CLS 0, TBT 70 ms, transfer 103 KiB.
+- `sh -n site/public/install.sh` — passed.
+
+Evidence: `.factory/evidence/polish-4/` and `.factory/polish-4.md`.
+
+## Run locally
 
 ```sh
 npm ci
+npm run dev:site
+npm run dev
 npm test
-npm run test:unit
-npm run typecheck
 npm run build
 ```
 
-Use <https://project-color-beacons.sociobot.in/demo> for the isolated sample workspace.
+The isolated browser demo is <https://project-color-beacons.sociobot.in/demo>.
+
+## Needs operator action
+
+No source-code or review work remains. To publish Windows/macOS downloads, add
+these GitHub Actions secrets and trigger the next `v*` release:
+
+- Windows: `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD`.
+- Apple: `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`.
+
+Until those checks pass, the product intentionally offers only the verified
+Linux package. Windows/macOS links and purchase access remain unavailable.
