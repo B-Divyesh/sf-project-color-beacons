@@ -14,6 +14,8 @@ available and the site and installers state that the operating system may show
 a publisher warning.
 
 - Release: <https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.6>
+- Release workflow: <https://github.com/B-Divyesh/sf-project-color-beacons/actions/runs/33299843030>
+- Release commit: `1cffc3b84824f51def901b5c323412f052573b00`
 - Site: <https://project-color-beacons.sociobot.in>
 - Demo: <https://project-color-beacons.sociobot.in/demo>
 
@@ -56,22 +58,33 @@ Package and browser gates:
 
 - `CI=false npm run tauri -- build --bundles deb` — produced the 0.1.6 amd64
   Debian package; `dpkg-deb --info` reports version 0.1.6 and amd64.
-- Production site JavaScript is 23.00 kB raw / 8.12 kB gzip. CSS is 13.25 kB
-  raw / 3.84 kB gzip.
+- Production site JavaScript is 23,087 bytes raw / 8,199 bytes gzip. CSS is
+  13,252 bytes raw / 3,840 bytes gzip.
 - Lighthouse mobile against the production preview: performance 100,
   accessibility 100, best practices 100, SEO 100; LCP 1.36 s, CLS 0, TBT 10 ms,
   transfer 52,931 bytes.
-- `npx @axe-core/cli` against `/` and `/demo` — zero violations on both pages.
+- `npx @axe-core/cli@4.13.0` against the live `/` and `/demo` routes — zero
+  violations on both pages (axe-core 4.10.3).
 - The Playwright suite covers desktop, 390 px mobile, 200% text, dark mode,
   keyboard focus and activation, offline reload, route history, privacy request
   boundaries, demo isolation/disposal, and console errors.
 - `npm run test:release` verifies the published 0.1.6 assets, checksums,
   manifest, GitHub source attestations, platform status records, tag, and commit.
+- Release workflow run `33299843030` passed Linux, Windows, Intel macOS,
+  Apple-silicon macOS, and finalization for the release commit above.
 - `npm run test:live:site` verifies live routes, headers, desktop and 390 px
   behavior, Axe, keyboard, privacy, offline reload, all-platform package links,
   checkout, and version identity.
+- `npm run test:live:billing` verifies one live $24 product and its hosted
+  checkout redirect.
 - `/opt/fleet/lib/verify-url.sh` verifies title, language, main landmark, image
   alternatives, and console output on `/`, `/demo`, `/privacy`, and `/terms`.
+- Live HTML, JavaScript, and CSS SHA-256 values exactly match `dist/site`.
+- The live shell installer downloaded and checksum-verified the 0.1.6 AppImage,
+  installed it in an isolated temporary bin directory, and the installed app
+  remained running through a ten-second headless launch smoke test.
+- The static bundle was deployed only to the `sf-project-color-beacons` Static
+  Web App production environment.
 
 ## Run locally
 
