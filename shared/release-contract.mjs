@@ -1,17 +1,22 @@
 /**
- * A browser cannot inspect an Authenticode signature or Apple's notarization
- * ticket. It therefore waits for the release workflow's verification record,
- * as well as complete package, checksum, and GitHub provenance files, before
- * offering any desktop download.
+ * Every published package is tied to this repository, workflow, commit, and
+ * tag by GitHub provenance. Platform trust is evaluated separately so an
+ * absent Apple or Windows certificate cannot block a verified Linux package.
  */
-export const VERIFIED_RELEASE_MARKER = 'Verified desktop release.';
+export const VERIFIED_RELEASE_MARKER = 'Source-verified desktop release.';
 export const PROVENANCE_ASSET = 'BUILD-PROVENANCE.sigstore.json';
 export const PLATFORM_SIGNATURES_ASSET = 'platform-signatures.json';
-export const PLATFORM_STATUS_MARKERS = [
-  'Windows signature check: passed.',
-  'macOS signing check: passed.',
-  'macOS notarization check: passed.'
-];
+export const PLATFORM_STATUS_MARKERS = {
+  linux: { verified: 'Linux provenance check: passed.' },
+  windows: {
+    verified: 'Windows Authenticode check: passed.',
+    unavailable: 'Windows Authenticode check: unavailable.'
+  },
+  macOS: {
+    verified: 'macOS signing and notarization check: passed.',
+    unavailable: 'macOS signing and notarization check: unavailable.'
+  }
+};
 
 const platformRequirements = {
   macOS: [/x64\.dmg$/i, /aarch64\.dmg$/i],
@@ -40,8 +45,13 @@ export function verifiedReleaseIssues(release) {
   if (!release.body?.includes(VERIFIED_RELEASE_MARKER)) {
     issues.push('The release does not carry the verified-release marker.');
   }
-  for (const marker of PLATFORM_STATUS_MARKERS) {
-    if (!release.body?.includes(marker)) issues.push(`Missing release status: ${marker}`);
+  if (!release.body?.includes(PLATFORM_STATUS_MARKERS.linux.verified)) {
+    issues.push(`Missing release status: ${PLATFORM_STATUS_MARKERS.linux.verified}`);
+  }
+  for (const platform of ['windows', 'macOS']) {
+    const markers = PLATFORM_STATUS_MARKERS[platform];
+    const statusCount = [markers.verified, markers.unavailable].filter((marker) => release.body?.includes(marker)).length;
+    if (statusCount !== 1) issues.push(`The release must carry exactly one ${platform} trust status.`);
   }
 
   const names = new Set((release.assets ?? []).map((asset) => asset.name));
@@ -78,15 +88,15 @@ export function platformSignatureIssues(release, record) {
 
   const names = new Set((release?.assets ?? []).map((asset) => asset.name));
   const windows = record.platforms?.windows;
-  if (!windows?.authenticodeVerified || !windows.asset || !names.has(windows.asset) || !/\.(msi|exe)$/i.test(windows.asset)) {
-    issues.push('The Windows Authenticode verification record is incomplete.');
+  if (typeof windows?.authenticodeVerified !== 'boolean' || !windows.asset || !names.has(windows.asset) || !/\.(msi|exe)$/i.test(windows.asset)) {
+    issues.push('The Windows signing status record is incomplete.');
   }
 
   const macOS = record.platforms?.macOS;
   const expectedMacAssets = [...names].filter((name) => /(?:x64|aarch64)\.dmg$/i.test(name));
-  if (!macOS?.codeSigned || !macOS.notarized || !Array.isArray(macOS.assets)
+  if (typeof macOS?.codeSigned !== 'boolean' || typeof macOS?.notarized !== 'boolean' || !Array.isArray(macOS.assets)
     || expectedMacAssets.some((name) => !macOS.assets.includes(name))) {
-    issues.push('The macOS signing and notarization record is incomplete.');
+    issues.push('The macOS signing status record is incomplete.');
   }
 
   const linux = record.platforms?.linux;
@@ -95,12 +105,50 @@ export function platformSignatureIssues(release, record) {
     || expectedLinuxAssets.some((name) => !linux.assets.includes(name))) {
     issues.push('The Linux provenance record is incomplete.');
   }
+  if (windows && release?.body?.includes(PLATFORM_STATUS_MARKERS.windows.verified) !== windows.authenticodeVerified) {
+    issues.push('The Windows release status disagrees with its signing record.');
+  }
+  const macVerified = macOS?.codeSigned === true && macOS?.notarized === true;
+  if (macOS && release?.body?.includes(PLATFORM_STATUS_MARKERS.macOS.verified) !== macVerified) {
+    issues.push('The macOS release status disagrees with its signing record.');
+  }
   return issues;
 }
 
 /** @param {Release | undefined} release @param {PlatformSignatureRecord | undefined} record */
 export function isInstallableVerifiedRelease(release, record) {
   return platformSignatureIssues(release, record).length === 0;
+}
+
+/**
+ * @param {Release | undefined} release
+ * @param {PlatformSignatureRecord | undefined} record
+ * @param {'macOS' | 'windows' | 'linux'} platform
+ */
+export function platformInstallabilityIssues(release, record, platform) {
+  const issues = platformSignatureIssues(release, record);
+  if (issues.length) return issues;
+  if (platform === 'windows' && record?.platforms.windows?.authenticodeVerified !== true) {
+    issues.push('The Windows package does not have a verified Authenticode signature.');
+  }
+  if (platform === 'macOS' && (record?.platforms.macOS?.codeSigned !== true || record.platforms.macOS.notarized !== true)) {
+    issues.push('The macOS packages are not signed and notarized.');
+  }
+  if (platform === 'linux' && record?.platforms.linux?.provenanceVerified !== true) {
+    issues.push('The Linux package does not have verified GitHub provenance.');
+  }
+  return issues;
+}
+
+/** @param {Release | undefined} release @param {PlatformSignatureRecord | undefined} record @param {'macOS' | 'windows' | 'linux'} platform */
+export function isPlatformInstallable(release, record, platform) {
+  return platformInstallabilityIssues(release, record, platform).length === 0;
+}
+
+/** @param {Release | undefined} release @param {'macOS' | 'windows' | 'linux'} platform */
+export function releaseMarksPlatformVerified(release, platform) {
+  if (!isCompleteVerifiedRelease(release)) return false;
+  return release.body?.includes(PLATFORM_STATUS_MARKERS[platform].verified) === true;
 }
 
 /**

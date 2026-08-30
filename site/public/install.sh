@@ -14,8 +14,8 @@ provenance="$(mktemp "${TMPDIR:-/tmp}/project-color-beacons-provenance.XXXXXX.js
 platform_signatures="$(mktemp "${TMPDIR:-/tmp}/project-color-beacons-platform-signatures.XXXXXX.json")"
 trap 'rm -f "$release_json" "$checksums" "$provenance" "$platform_signatures"' EXIT
 curl -fsSL "https://api.github.com/repos/$repo/releases/latest" -o "$release_json"
-grep -q '"body": "Verified desktop release\.' "$release_json" || {
-  printf '%s\n' 'A verified desktop release is not published yet.' >&2
+grep -q '"body": "Source-verified desktop release\.' "$release_json" || {
+  printf '%s\n' 'A source-verified desktop release is not published yet.' >&2
   exit 1
 }
 asset_url="$(sed -n 's/.*"browser_download_url": "\([^"]*\)".*/\1/p' "$release_json" | grep "$pattern" | head -n 1)"
@@ -29,6 +29,21 @@ curl -fsSL "$asset_url" -o "$destination"
 curl -fsSL "$checksum_url" -o "$checksums"
 curl -fsSL "$provenance_url" -o "$provenance"
 curl -fsSL "$platform_signatures_url" -o "$platform_signatures"
+compact_status="$(tr -d '[:space:]' < "$platform_signatures")"
+case "$(uname -s)" in
+  Linux)
+    printf '%s' "$compact_status" | grep -q '"linux":{[^}]*"provenanceVerified":true' || {
+      printf '%s\n' 'The Linux package origin is not verified. Nothing was installed.' >&2
+      exit 1
+    }
+    ;;
+  Darwin)
+    printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true' || {
+      printf '%s\n' 'A signed and notarized macOS package is not published yet.' >&2
+      exit 1
+    }
+    ;;
+esac
 expected="$(grep " $filename\$" "$checksums" | cut -d ' ' -f 1)"
 if command -v sha256sum >/dev/null 2>&1; then
   actual="$(sha256sum "$destination" | cut -d ' ' -f 1)"
@@ -38,7 +53,7 @@ fi
 [ "$expected" = "$actual" ] || { printf '%s\n' 'Checksum failed. The download was not installed.' >&2; exit 1; }
 if command -v gh >/dev/null 2>&1; then
   gh attestation verify "$destination" --repo "$repo" --bundle "$provenance" >/dev/null
-  printf '%s\n' 'Verified GitHub package record.'
+  printf '%s\n' 'Verified GitHub package origin.'
 else
   printf '%s\n' 'Checksum verified. Install GitHub CLI to verify the included GitHub package record.'
 fi

@@ -1,7 +1,12 @@
 import './site.css';
 import { SAMPLE_PROJECTS, beaconFor, selectedEditorFiles, type Project } from '../../shared/beacons';
 import { displayPrice, registeredBillingProductForCurrentOrigin } from '../../shared/billing';
-import { isCompleteVerifiedRelease, matchingPlatformAsset, type Release } from '../../shared/release-contract.mjs';
+import {
+  isCompleteVerifiedRelease,
+  matchingPlatformAsset,
+  releaseMarksPlatformVerified,
+  type Release
+} from '../../shared/release-contract.mjs';
 import { APP_VERSION, BUILD_DATE } from '../../shared/build-info.mjs';
 
 const app = document.getElementById('app');
@@ -67,7 +72,7 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a verified desktop release is published.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a verified package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -244,18 +249,19 @@ async function setupDownloads(): Promise<Release | null> {
       if (!release) throw new Error('Release not available');
       localStorage.setItem('pcb:release-cache', JSON.stringify({ at: Date.now(), data: release }));
     }
+    if (!releaseMarksPlatformVerified(release, platform)) throw new Error('Platform trust not available');
     const asset = matchingPlatformAsset(release, platform);
     if (!asset?.browser_download_url) throw new Error('Platform asset not available');
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    state.textContent = `${release.tag_name} · ${asset.name} · verified release`;
+    state.textContent = `${release.tag_name} · ${asset.name} · verified package origin`;
     return release;
   } catch {
     button.removeAttribute('href');
     button.setAttribute('aria-disabled', 'true');
     button.textContent = `Verified ${platformLabel} download pending`;
-    state.textContent = 'Verified desktop downloads are not published yet. The free browser demo remains available.';
+    state.textContent = `A verified ${platformLabel} download is not published yet. The free browser demo remains available.`;
     return null;
   }
 }
@@ -264,7 +270,7 @@ async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
   if (!hasInstallableRelease) {
-    offer.textContent = 'License purchases open with a verified desktop release. The free browser demo remains available.';
+    offer.textContent = 'License purchases open with a verified package for this platform. The free browser demo remains available.';
     return;
   }
   try {

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $repo = "B-Divyesh/sf-project-color-beacons"
 $release = Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest"
-if ($release.body -notmatch '^Verified desktop release\.') { throw "A verified desktop release is not published yet." }
+if ($release.body -notmatch '^Source-verified desktop release\.') { throw "A source-verified desktop release is not published yet." }
 $asset = $release.assets | Where-Object { $_.name -match '\.(msi|exe)$' } | Select-Object -First 1
 $sums = $release.assets | Where-Object { $_.name -eq 'SHA256SUMS' } | Select-Object -First 1
 $provenance = $release.assets | Where-Object { $_.name -eq 'BUILD-PROVENANCE.sigstore.json' } | Select-Object -First 1
@@ -15,6 +15,13 @@ Invoke-WebRequest $asset.browser_download_url -OutFile $target
 Invoke-WebRequest $sums.browser_download_url -OutFile $sumFile
 Invoke-WebRequest $provenance.browser_download_url -OutFile $provenanceFile
 Invoke-WebRequest $platformSignatures.browser_download_url -OutFile $platformSignaturesFile
+$platformStatus = Get-Content $platformSignaturesFile -Raw | ConvertFrom-Json
+if ($platformStatus.tag -ne $release.tag_name -or -not $platformStatus.githubProvenanceVerified) {
+  throw "The Windows package origin record is invalid. Nothing was installed."
+}
+if (-not $platformStatus.platforms.windows.authenticodeVerified -or $platformStatus.platforms.windows.asset -ne $asset.name) {
+  throw "A Windows package with a verified signature is not published yet."
+}
 $expected = ((Get-Content $sumFile | Where-Object { $_ -match [regex]::Escape($asset.name) }) -split ' ')[0]
 $actual = (Get-FileHash $target -Algorithm SHA256).Hash.ToLower()
 if ($expected.ToLower() -ne $actual) { Remove-Item $target; throw "Checksum failed. The download was removed." }
@@ -22,7 +29,7 @@ $signature = Get-AuthenticodeSignature -FilePath $target
 if ($signature.Status -ne 'Valid') { Remove-Item $target; throw "Windows signature verification failed: $($signature.Status). The download was removed." }
 if (Get-Command gh -ErrorAction SilentlyContinue) {
   gh attestation verify $target --repo $repo --bundle $provenanceFile | Out-Null
-  Write-Output "Verified GitHub package record."
+  Write-Output "Verified GitHub package origin."
 } else {
   Write-Output "Checksum and Windows signature verified. Install GitHub CLI to verify the included GitHub package record."
 }

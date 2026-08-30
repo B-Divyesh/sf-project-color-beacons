@@ -3,6 +3,7 @@ import {
   PLATFORM_SIGNATURES_ASSET,
   VERIFIED_RELEASE_MARKER,
   isCompleteVerifiedRelease,
+  isPlatformInstallable,
   platformSignatureIssues,
   verifiedReleaseIssues
 } from '../shared/release-contract.mjs';
@@ -88,6 +89,9 @@ try {
   ]);
   const platformIssues = platformSignatureIssues(release, platformSignatures);
   if (platformIssues.length) throw new Error(platformIssues.join(' '));
+  if (!isPlatformInstallable(release, platformSignatures, 'linux')) {
+    throw new Error('The release has no installable Linux package with verified provenance.');
+  }
   const checksums = parseChecksums(sumsText);
   const packageAssets = release.assets.filter((asset) => !['SHA256SUMS', 'latest.json', PROVENANCE_ASSET, PLATFORM_SIGNATURES_ASSET].includes(asset.name));
   const publishedStatement = decodeStatement(publishedBundle);
@@ -124,6 +128,7 @@ try {
     tag: release.tag_name,
     attestation: VERIFIED_RELEASE_MARKER,
     source: `${repository}/.github/workflows/release.yml@refs/tags/${release.tag_name}`,
+    platformTrust: platformSignatures.platforms,
     packages: packageAssets.map((asset) => asset.name),
     result: 'pass'
   }, null, 2));

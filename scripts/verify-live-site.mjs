@@ -149,11 +149,11 @@ try {
   const billing = await billingContext.newPage();
   await billing.goto(`${origin}/`, { waitUntil: 'networkidle' });
   const download = billing.locator('#download-button');
-  await download.getByText('Verified Linux download pending').waitFor();
-  assert.equal(await download.getAttribute('href'), null);
-  assert.equal(await download.getAttribute('aria-disabled'), 'true');
-  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
-  assert.match(await billing.locator('#purchase-offer').innerText(), /verified desktop release/);
+  await download.getByText('Download for Linux').waitFor();
+  assert.match(await download.getAttribute('href'), /Project\.Color\.Beacons_0\.1\.3_amd64\.AppImage$/);
+  assert.equal(await download.getAttribute('aria-disabled'), null);
+  assert.equal(await billing.getByRole('link', { name: 'Buy a $24 license' }).count(), 1);
+  assert.match(await billing.locator('#download-state').innerText(), /v0\.1\.3 .* verified package origin/);
   await billingContext.close();
 
   const returnContext = await browser.newContext();
@@ -165,7 +165,7 @@ try {
   assert.equal(await returned.evaluate(() => localStorage.getItem('sb_license:project-color-beacons')), 'fixture-return');
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, verified-release gate, and license return.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, verified Linux release, and license return.');
 } finally {
   await browser.close();
 }

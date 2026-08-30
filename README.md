@@ -47,20 +47,32 @@ The release workflow targets these packages when a `v*` tag is pushed:
 - Windows: MSI or executable installer
 - Linux: AppImage and Debian package
 
-The workflow publishes `SHA256SUMS`, `latest.json`, and a GitHub provenance file. GitHub records the repository, workflow, commit, and tag for each package.
+The workflow publishes `SHA256SUMS`, `latest.json`, a platform-status record, and a GitHub provenance file.
 
-The landing page detects the operating system and resolves a matching package through the GitHub API. It keeps downloads unavailable until every platform package, the GitHub provenance file, and verified platform-signature record exist. Windows packages require a verified Windows signature. macOS packages require verified signing and notarization.
+GitHub records the repository, workflow, commit, and tag for each package.
 
-After publishing a release, run these independent checks. The first checks release files, checksums, the manifest, and GitHub's package-origin record. The second checks a downloaded package against the repository identity.
+The landing page detects the operating system and resolves a matching package through the GitHub API.
+
+Linux downloads require verified GitHub provenance. Windows requires Authenticode. macOS requires signing and notarization.
+
+The release records missing owner certificates honestly. One platform's missing certificate does not block a verified package for another platform.
+
+After publishing a release, run these independent checks. The first checks release files, checksums, the manifest, and GitHub's package-origin record.
+
+The second checks a downloaded package against the repository identity.
 
 ```bash
 npm run test:release
 gh attestation verify <downloaded-package> --repo B-Divyesh/sf-project-color-beacons
 ```
 
+Windows and macOS signing need owner certificates. Their downloads remain closed until the workflow verifies those platform signatures.
+
 ## Price and privacy
 
-Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit. The site shows a purchase link only when the Sociobot catalogue has an active checkout.
+Color, name, symbol, and confirmation are free for up to three projects. A valid license removes the project limit.
+
+The site shows a purchase link only when checkout is active and a verified package exists for the visitor's platform.
 
 Project names, local paths, and settings stay on the device during normal use. A license check sends only the pasted license value to `api.sociobot.in`. Read the shipped `/privacy` and `/terms` pages for details.
 

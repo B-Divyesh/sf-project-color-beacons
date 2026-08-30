@@ -14,6 +14,7 @@ jobs:
   build:
     env:
       APPLE_SIGNING_CONFIGURED: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_SIGNING_IDENTITY != '' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
+      WINDOWS_SIGNING_CONFIGURED: ${{ secrets.WINDOWS_CERT_PFX != '' && secrets.WINDOWS_CERT_PASSWORD != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -38,9 +39,9 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Install Linux libraries
         if: matrix.platform == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils file
       - run: npm ci
-      - name: Require Windows code-signing certificate
+      - name: Configure optional Windows code-signing certificate
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
@@ -49,19 +50,12 @@ jobs:
         run: |
           $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX)
           $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)
-          if (-not $hasCertificate -or -not $hasPassword) {
-            throw 'WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD are required for a public release.'
+          if ($hasCertificate -ne $hasPassword) {
+            throw 'Configure both WINDOWS_CERT_PFX and WINDOWS_CERT_PASSWORD, or neither.'
           }
-      - name: Require Apple signing and notarization credentials
-        if: matrix.platform == 'macos-latest'
-        shell: bash
-        run: |
-          test "${{ env.APPLE_SIGNING_CONFIGURED }}" = 'true' || {
-            printf '%s\n' 'Apple signing and notarization credentials are required for a public release.' >&2
-            exit 1
-          }
+          if (-not $hasCertificate) { Write-Output 'No Windows certificate is configured; the package will be recorded as unsigned.' }
       - name: Import Windows signing certificate
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' && env.WINDOWS_SIGNING_CONFIGURED == 'true'
         shell: pwsh
         env:
           WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
@@ -79,8 +73,8 @@ jobs:
           $config.bundle.windows | Add-Member -Force -MemberType NoteProperty -Name timestampUrl -Value 'http://timestamp.digicert.com'
           $config | ConvertTo-Json -Depth 20 | Set-Content $configPath
           Remove-Item $pfxPath
-      - name: Build Windows or Linux package
-        if: matrix.platform != 'macos-latest'
+      - name: Build unsigned or non-macOS package
+        if: matrix.platform != 'macos-latest' || env.APPLE_SIGNING_CONFIGURED != 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,16 +82,14 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: Project Color Beacons ${{ github.ref_name }}
           releaseBody: |
-            Verified desktop release.
+            Source-verified desktop release.
 
-            Windows installers have a verified Windows signature. macOS packages are signed and notarized. GitHub records which repository, workflow, commit, and tag produced each package.
-
-            Windows signature check: passed. macOS signing check: passed. macOS notarization check: passed.
+            GitHub records which repository, workflow, commit, and tag produced each package. See platform-signatures.json for Windows signing and macOS signing and notarization status. Packages without an operating-system signature may show a warning.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
       - name: Build signed and notarized macOS package
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING_CONFIGURED == 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,24 +103,23 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: Project Color Beacons ${{ github.ref_name }}
           releaseBody: |
-            Verified desktop release.
+            Source-verified desktop release.
 
-            Windows installers have a verified Windows signature. macOS packages are signed and notarized. GitHub records which repository, workflow, commit, and tag produced each package.
-
-            Windows signature check: passed. macOS signing check: passed. macOS notarization check: passed.
+            GitHub records which repository, workflow, commit, and tag produced each package. See platform-signatures.json for Windows signing and macOS signing and notarization status. Packages without an operating-system signature may show a warning.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
-      - name: Verify Windows installer signature
+      - name: Record Windows installer signature status
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          $installer = Get-ChildItem -Path 'src-tauri/target' -Recurse -File | Where-Object { $_.Extension -in '.msi', '.exe' } | Select-Object -First 1
+          $installer = Get-ChildItem -Path 'src-tauri/target' -Recurse -File | Where-Object { $_.FullName -match '[\\/]bundle[\\/]' -and $_.Extension -in '.msi', '.exe' } | Select-Object -First 1
           if (-not $installer) { throw 'No Windows installer was produced.' }
           $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
-          if ($signature.Status -ne 'Valid') { throw "Windows signature verification failed: $($signature.Status)" }
-          @{ platform = 'windows'; asset = $installer.Name; authenticodeVerified = $true } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
-      - name: Verify macOS signing and notarization
+          $verified = $signature.Status -eq 'Valid'
+          if ($env:WINDOWS_SIGNING_CONFIGURED -eq 'true' -and -not $verified) { throw "Windows signature verification failed: $($signature.Status)" }
+          @{ platform = 'windows'; asset = $installer.Name; authenticodeVerified = $verified } | ConvertTo-Json | Set-Content 'platform-signature-x86_64-pc-windows-msvc.json'
+      - name: Record macOS signing and notarization status
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
@@ -136,12 +127,20 @@ jobs:
           disk_images=()
           while IFS= read -r disk_image; do disk_images+=("$disk_image"); done < <(find src-tauri/target -name '*.dmg' -type f)
           test "${#disk_images[@]}" -gt 0
+          code_signed=false
+          notarized=false
+          if [ "${APPLE_SIGNING_CONFIGURED}" = 'true' ]; then
+            code_signed=true
+            notarized=true
+          fi
           for disk_image in "${disk_images[@]}"; do
-            assessment="$(spctl --assess --type open --context context:primary-signature --verbose "$disk_image" 2>&1)"
-            printf '%s\n' "$assessment"
-            printf '%s' "$assessment" | grep -Eq 'Notarized Developer ID|source=Notarized Developer ID'
+            if [ "${APPLE_SIGNING_CONFIGURED}" = 'true' ]; then
+              assessment="$(spctl --assess --type open --context context:primary-signature --verbose "$disk_image" 2>&1)"
+              printf '%s\n' "$assessment"
+              printf '%s' "$assessment" | grep -Eq 'Notarized Developer ID|source=Notarized Developer ID'
+            fi
           done
-          node -e 'const fs=require("fs"); const names=process.argv.slice(1); fs.writeFileSync("platform-signature-${{ matrix.target }}.json", JSON.stringify({platform:"macOS",assets:names,codeSigned:true,notarized:true},null,2));' "${disk_images[@]##*/}"
+          node -e 'const fs=require("fs"); const [signed, notarized, ...names]=process.argv.slice(1); fs.writeFileSync("platform-signature-${{ matrix.target }}.json", JSON.stringify({platform:"macOS",assets:names,codeSigned:signed==="true",notarized:notarized==="true"},null,2));' "$code_signed" "$notarized" "${disk_images[@]##*/}"
       - name: Upload platform signature report
         if: matrix.platform == 'windows-latest' || matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
@@ -176,6 +175,12 @@ jobs:
         run: cp "${{ steps.provenance.outputs.bundle-path }}" release-assets/BUILD-PROVENANCE.sigstore.json
       - name: Record verified platform signatures
         run: node scripts/make-platform-signature-record.mjs release-assets signature-reports "${GITHUB_REF_NAME}"
+      - name: Publish truthful platform status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/make-release-body.mjs release-assets/platform-signatures.json release-body.md
+          gh release edit "${GITHUB_REF_NAME}" --notes-file release-body.md
       - name: Upload verified metadata and publish release
         uses: softprops/action-gh-release@v2
         with:
