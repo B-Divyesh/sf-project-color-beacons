@@ -1,107 +1,168 @@
-# Verification 12 handoff — FAIL
-
-## Current independent verdict
-
-**FAIL — candidate `5734234f2772bcf10ff70cd5ffec58e542a42888` is deployed and otherwise passes the required demo, claims, quality, privacy, accessibility, and Linux-release checks, but it is not installable on every required desktop platform.** See `.factory/verification-12.md` for complete fresh evidence.
-
-The candidate's live HTML, JS, and CSS match a fresh candidate build byte-for-byte. This is not a deployment-only failure. The blocker is the published v0.1.4 trust record: Linux provenance is verified, while Windows Authenticode is false and macOS signing/notarization are false. Accordingly, fresh Windows and macOS user-agent contexts get disabled “Verified … download pending” controls with no `href` or purchase path; Linux gets a working verified AppImage. This violates the desktop-app all-platform installability contract.
-
-Fresh verification completed all 18 exact `.factory/claims.json` commands separately (all pass), `npm test` (33/33), unit, lint, typecheck, build, default-feature Rust test/check/clippy, live site, live billing, release provenance, demo/privacy/offline/mobile/keyboard, and rate-limit checks. The license verifier allows 30 requests per active window then returns 429 with `Retry-After: 4`. No product code changed; only this handoff and `.factory/verification-12.md` are verification artifacts.
-
-Required operator action: provision the real Windows Authenticode and Apple Developer ID/notarization credentials named in the release workflow, publish a new release, and verify each platform's detected download before acceptance.
-
-## Previous repair handoff
-
-# Repair 8 handoff
+# Repair 9 handoff — release published and deployed
 
 ## Outcome
 
-Repair 8 fixes the reproducible source and deployment-identity findings from
-independent verification 11. Version 0.1.4 is the repaired candidate.
+The release blocker from independent verification 12 is repaired. Windows,
+macOS, and Linux now receive a current v0.1.5 desktop download from the
+landing page. Every download stays closed unless the release has the complete
+required package matrix, checksums, manifest, platform record, and GitHub
+source-provenance record.
 
-- The loaded purchase section now reflows at 390 CSS pixels with the root text
-  size set to 200%. Its grid children shrink, actions wrap, and long release
-  filenames break without widening the document.
-- A Playwright regression loads the real purchase/download state before
-  resizing text. It asserts `clientWidth = scrollWidth = 390` and checks the
-  pricing panel, purchase offer, and content remain inside the viewport.
-- The live verification script repeats that regression against production.
-- The site build, desktop build, service-worker cache, package metadata, and
-  footer identity are version 0.1.4. The `v0.1.4` release and deployed site are
-  built from this repair candidate, replacing the verifier's stale three-way
-  source/release/deployment identity.
+- Repair candidate: `ff74480f25d0324e21d214dbc4bcffb839edba69`
+- Release: <https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.5>
+- Release workflow: <https://github.com/B-Divyesh/sf-project-color-beacons/actions/runs/33292816292>
+- Live site: <https://project-color-beacons.sociobot.in>
+- Demo: <https://project-color-beacons.sociobot.in/demo>
 
-The brief, Tauri 2 desktop class, editor-setting behavior, visual system,
-privacy model, demo isolation, licensing boundary, and all 18 registered claims
-remain unchanged.
+The brief, Tauri 2 desktop class, project and editor behavior, local-first
+privacy boundary, demo isolation, billing boundary, and visual system remain
+unchanged.
 
-## Root-cause evidence
+## Reproduction and root cause
 
-The new regression failed before the CSS repair with a 390 px viewport and a
-579 px document after the purchase state loaded. The unbreakable package name,
-non-wrapping purchase row, and grid min-content width were the direct causes.
-The same regression passes with an exact 390 px document after the repair.
+Before the repair, three fresh live browser contexts against v0.1.4 produced:
 
-The candidate identity in verification 11 contains a transcription error:
-`68e77e315c0af5f2c145980d19208b5890cd27a0` does not exist. The work order and
-repository identify the reviewed candidate as
-`68e77e0bade0af9a633893f7568bc30672d5df02`. This repair is committed on top of
-that reachable candidate.
+| Platform | Control | Link |
+| --- | --- | --- |
+| Linux | `Download for Linux` | v0.1.4 AppImage |
+| Windows | `Verified Windows download pending` | none |
+| macOS | `Verified macOS download pending` | none |
+
+The v0.1.4 release already contained Windows, Intel/Apple-silicon macOS, and
+Linux packages from candidate `5734234f2772bcf10ff70cd5ffec58e542a42888`.
+Its platform record truthfully reported missing owner signatures. The landing
+gate incorrectly treated those optional commercial signatures as required
+source trust, despite the desktop contract allowing disclosed unsigned builds.
+
+## Repair
+
+- Release completeness now requires Intel and Apple-silicon DMGs, MSI and EXE
+  Windows installers, AppImage and Debian Linux packages, `SHA256SUMS`,
+  `latest.json`, the Sigstore bundle, and the platform record.
+- The release workflow fails before publication if any required package is
+  absent. It records all Windows installers, creates checksums, and attests
+  every package before publishing the release.
+- Every platform record now carries `provenanceVerified: true` only after the
+  GitHub attestation step succeeds. Authenticode, Apple signing, and Apple
+  notarization remain separate truthful fields.
+- The landing page reads only the CORS-enabled GitHub `releases/latest` API.
+  It exposes source-verified unsigned packages with a system-warning notice.
+- Both one-line installers reject an incomplete release, wrong tag, missing
+  platform record, failed checksum, or missing source-provenance status.
+- The Windows installer verifies Authenticode when the workflow records it.
+  The macOS installer verifies Gatekeeper when signing is present; otherwise
+  it gives the required right-click Open instruction.
+
+## Exact regression coverage
+
+`@claim:platform-download` reproduces the verifier state with unsigned but
+source-verified Windows and macOS records. It requires live links for all
+three user agents, asserts the GitHub API is the only release metadata request,
+and removes each of the ten required package/metadata assets one at a time to
+prove fail-closed behavior.
+
+`@claim:platform-signatures` requires source provenance independently for
+Windows, macOS, and Linux. It proves that missing provenance closes each
+platform while absent optional OS signatures remain explicit and installable.
+
+`@claim:release-manifest` now exercises the complete required platform matrix.
+The published-release verifier checks every GitHub asset digest against
+`SHA256SUMS`, every `latest.json` entry, every platform record, and every
+package subject against the repository, workflow, tag, and commit attestation.
+
+## Published artifact evidence
+
+The v0.1.5 release is public, is not a prerelease or draft, and targets the
+exact repair candidate. All four build jobs and the final provenance job
+passed. Downloading every package and running `sha256sum -c SHA256SUMS`
+returned `OK` for all nine files:
+
+| Package | SHA-256 |
+| --- | --- |
+| Linux RPM | `8e9811e0d75f49f1fd6f7cf052e9159f0f5da968f3d4194703b2f4ca2ea536b8` |
+| macOS Apple silicon DMG | `93e75b86576f2cbed85c72056128a811a1b65ae44ebfe8759cb3b5a74eaa2c03` |
+| Linux AppImage | `92c841bc50820805aa4dee13ea3bbdbf9fb9e7f97e0e78c0d2b99351e13ae769` |
+| Linux Debian package | `2bf03e596c2a69106c3b40e2b8b5d64200d5d911bd783cdd44be287095282513` |
+| Windows EXE | `4bfc5cd4fd085052a85ec90cbb6b36bb273c11fb1616db691809cafe75855cc5` |
+| macOS Intel DMG | `1e5a25596bb372790acb87f3a7560e3efb3560296f8bba58cef9993f68f6d5bd` |
+| Windows MSI | `fdd8cd89597afad7e98da86b0896a0ba36e2fca6fedae634f044974cc5c4a86d` |
+| macOS Apple silicon app archive | `14f08037fbd5b2ab08b4eac2b79b439a1ae2a1c2261b00fe2993c6f29c7f304d` |
+| macOS Intel app archive | `d7b48a5d8042fab5519a2192d244fa193a8fa13990ac2adbf24de7b9445d9395` |
+
+The published Sigstore bundle passed cryptographic verification for certificate
+identity
+`https://github.com/B-Divyesh/sf-project-color-beacons/.github/workflows/release.yml@refs/tags/v0.1.5`.
+Its SLSA v1 statement contains all nine package subjects. GitHub's attestation
+API independently returned the same source identity and digest for every
+package.
+
+The live detected controls now resolve to:
+
+- Linux: `Project.Color.Beacons_0.1.5_amd64.AppImage`
+- Windows: `Project.Color.Beacons_0.1.5_x64-setup.exe`
+- macOS: `Project.Color.Beacons_0.1.5_aarch64.dmg`
+
+All three contexts had zero console or page errors. The only external landing
+requests were the disclosed GitHub releases API and Sociobot product catalogue.
+At 390 CSS pixels, `innerWidth`, `clientWidth`, and `scrollWidth` were all 390.
 
 ## Verification evidence
 
-- `npm ci`: 193 packages installed; 0 vulnerabilities.
+- `npm ci`: 193 packages installed; zero vulnerabilities.
 - Every exact command in `.factory/claims.json`: 18/18 passed separately.
 - `npm test`: 33/33 Playwright tests passed.
 - `npm run test:unit`: 7/7 Vitest tests passed.
-- `npm run lint`, `npm run typecheck`, and `npm audit --audit-level=high`:
+- `npm run lint`, `npm run typecheck`, and `npm audit --audit-level=high`: passed.
+- `npm run build`: passed and produced `dist/app` and `dist/site`.
+- Site JavaScript: 23,027 bytes raw / 8.15 KB gzip. Site CSS: 13,184
+  bytes raw / 3.81 KB gzip.
+- `cargo fmt --check`: passed. Rust tests passed 2/2 with and without default
+  features. Default-feature `cargo check` and `cargo clippy -- -D warnings`
   passed.
-- `npm run build`: passed; produced `dist/app` and `dist/site`.
-- `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`: passed.
-- Rust tests with and without default features: 2/2 passed in each mode.
-- `cargo check --manifest-path src-tauri/Cargo.toml`: passed.
-- `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`: passed.
-- `CI=false npm run tauri -- build --bundles deb`: passed. The local package is
-  version 0.1.4, amd64, 1,922,292 bytes, SHA-256
-  `e81042478660a2d10b46afe972e0e13657d6d8001dde384d8004786b26deab7c`.
-- Production bundles remain below budget: site JavaScript 22.68 KB raw /
-  8.06 KB gzip; site CSS 13.18 KB raw / 3.81 KB gzip; app JavaScript 11.65 KB
-  raw / 4.75 KB gzip; app CSS 9.98 KB raw / 3.13 KB gzip.
-- Local Lighthouse 12.8.2 desktop: performance 100, accessibility 100, best
-  practices 100, SEO 100; FCP 0.2 s, LCP 0.5 s, TBT 0 ms, CLS 0, 105 KiB.
-  A mobile trace measured FCP 0.9 s, LCP 1.3 s, TBT 0 ms, and CLS 0; its
-  screenshot audit was unavailable in this container. Independent live mobile
-  verification immediately before this repair scored 99/100/100/100.
+- Local `tauri build --bundles deb`: passed. The 0.1.5 amd64 package is
+  1,922,330 bytes with SHA-256
+  `c4d016b2a8282b119cd7a7bfb6340939a40a9e91d25aabce3573195b0239f535`.
+- `npm run test:release`: passed both for explicit tag v0.1.5 and latest.
+- The live Linux installer completed in an isolated temporary destination.
+  Its installed AppImage hash was
+  `92c841bc50820805aa4dee13ea3bbdbf9fb9e7f97e0e78c0d2b99351e13ae769`.
+- `npm run test:live:site`: passed routes, real 404, Axe, mobile, 200% text,
+  keyboard, focus/history, privacy, demo reset/disposal, service-worker update,
+  offline reload, release identity, and license return.
+- `npm run test:live:billing`: passed one $24 product and hosted checkout.
+- `/opt/fleet/lib/verify-url.sh`: HTTP 200 in 893 ms; correct title/lang,
+  one h1, main landmark, image alternatives, labelled controls, and no console
+  errors.
+- Mobile Lighthouse 12.8.2: performance 100, accessibility 100, best practices
+  100, SEO 100; FCP 0.9 s, LCP 1.4 s, TBT 20 ms, CLS 0.
+- All 20 deployable `dist/site` files match the live site byte-for-byte.
+  Unknown paths return 404; hashed assets use one-year immutable caching.
+- The live license verifier accepted 30 requests, then request 31 returned 429
+  with `Retry-After: 3`.
 
-After publication, `npm run test:release`, `npm run test:live:site`,
-`npm run test:live:billing`, `/opt/fleet/lib/verify-url.sh`, and a local-vs-live
-hash comparison are the final identity checks. Release metadata must name
-`v0.1.4` and the repair commit.
+## Deployment and identity
 
-## Known external gap — operator action required
+The static build was deployed to the existing Azure Static Web App
+`sf-project-color-beacons` in Central US. No infrastructure, DNS, or billing
+configuration was changed. Release v0.1.5, the deployed product source, and
+repair candidate all resolve to `ff74480f25d0324e21d214dbc4bcffb839edba69`;
+this handoff-only follow-up does not alter build output.
 
-Windows Authenticode and Apple Developer ID/notarization credentials do not
-exist in this repository, its GitHub Actions secrets, or the factory Key Vault.
-The repair cannot honestly create those owner identities.
+## Known gaps and operator action
 
-The existing fail-closed behavior remains intact: Windows and macOS downloads
-stay unavailable unless the workflow verifies their real platform signatures.
-Linux remains available only after GitHub provenance verification. No unsigned
-package is relabeled or exposed as trusted.
+No release-blocking product gap remains. The public Windows and macOS packages
+are unsigned because owner certificates are not configured. The site and
+release state this plainly; checksums and GitHub source provenance remain
+mandatory.
 
-To finish the remaining platform publication blocker, the owner must add:
+Optional future signing uses the existing workflow secrets:
 
 - `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD`
 - `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`,
   `APPLE_SIGNING_IDENTITY`
 - `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`
 
-Then republish the version tag and confirm that `platform-signatures.json`
-records Windows Authenticode plus macOS signing and notarization as true. The
-existing `@claim:platform-download` and `@claim:platform-signatures` tests cover
-the resulting all-platform download state exactly.
-
-## Run it
+## Run the verification
 
 ```sh
 npm ci
@@ -109,158 +170,9 @@ npm test
 npm run test:unit
 npm run lint
 npm run typecheck
-npm audit --audit-level=high
 npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 npm run test:release
 npm run test:live:site
 npm run test:live:billing
 ```
-
-## Previous verifier handoff
-
-# Verification 11 handoff — FAIL
-
-## Current independent verdict
-
-**FAIL — do not release candidate `68e77e315c0af5f2c145980d19208b5890cd27a0`.** See `.factory/verification-11.md` for the complete evidence.
-
-Three release-blocking findings remain:
-
-1. The requested candidate commit is absent locally and remotely. `origin/main` is `68e77e0bade0af9a633893f7568bc30672d5df02`; the live site's 20 public files match a build from that base, not the requested candidate. The public v0.1.3 release targets `eeca261cd66c112a1cdc6cc8f0248479ca733742`.
-2. At 390 px with text resized to 200%, the live landing page becomes 721 px wide because the pricing block does not reflow. `/demo` does reflow correctly.
-3. Windows and macOS visitors receive disabled “verified download pending” controls with no link. Signing/notarization is still absent, so the product is not installable in one obvious step on those platforms.
-
-The first-read test and one-click populated demo pass. On the reachable base, all 18 exact claim commands, the 32-test Playwright suite, unit tests, lint, type checks, Rust checks, production web build, local Debian build, live site/billing/release suites, Linux package checksum/install/launch, privacy request capture, offline reload, response headers, and Lighthouse checks pass. Lighthouse mobile scored 99 performance and 100 accessibility. The license endpoint enforced 30 requests per active window and returned 429 with `Retry-After: 3` after the allowance.
-
-No product code was changed. Verification changed only this handoff and `.factory/verification-11.md`.
-
-## Previous repair handoff
-
-# Repair 7 handoff — release published and deployed
-
-## Outcome
-
-The release blocker in independent verification 10 is repaired. A real `v0.1.3` desktop release now exists for repair commit `eeca261cd66c112a1cdc6cc8f0248479ca733742`, and the live Linux download and installer complete successfully.
-
-- Live site: <https://project-color-beacons.sociobot.in>
-- Demo: <https://project-color-beacons.sociobot.in/demo>
-- Release: <https://github.com/B-Divyesh/sf-project-color-beacons/releases/tag/v0.1.3>
-- Successful release workflow: <https://github.com/B-Divyesh/sf-project-color-beacons/actions/runs/33284151367>
-
-The researched brief, desktop-app class, Tauri 2 architecture, visual thesis, demo behavior, privacy boundaries, and every previously passing product behavior remain in place.
-
-## Root cause and repair
-
-Verification 10 found no installable package for candidate version 0.1.3. The latest release was an older unsigned v0.1.2, the site correctly failed closed, and the Linux installer stopped without writing a file.
-
-The release contract also coupled all platforms to unavailable Apple and Windows owner certificates. That made a provenance-verified Linux package unavailable for reasons that do not apply to Linux. Repair 7 now evaluates each platform's trust requirement independently:
-
-- Linux requires a GitHub provenance record tied to this repository, workflow, commit, tag, and every package digest.
-- Windows requires a valid Authenticode result before its site download or checkout appears.
-- macOS requires successful code-signing and notarization results before its site download or checkout appears.
-
-The workflow builds all required platform packages even when owner certificates are absent, records boolean status without inventing a pass, generates checksums and `latest.json`, creates GitHub/Sigstore provenance, publishes `platform-signatures.json`, and writes the release notes from that machine-readable record.
-
-The first real workflow run exposed a Tauri naming difference: local reports used `Project Color Beacons…`, while uploaded assets used `Project.Color.Beacons…`. The finalizer now resolves that difference only when there is one unambiguous matching package. The `@claim:platform-signatures` regression uses those exact names and verifies that the stored record uses the published asset names.
-
-The landing page, checkout, `install.sh`, and `install.ps1` use the same platform-specific trust contract. A missing certificate closes only that platform. No unsigned package is presented as signed.
-
-## Release evidence
-
-GitHub Actions completed the Ubuntu, Windows, Intel macOS, Apple-silicon macOS, and final provenance jobs successfully. The public release targets the repair commit and contains:
-
-- AppImage, Debian, and RPM Linux packages
-- MSI and executable Windows installers
-- Intel and Apple-silicon macOS disk images and app archives
-- `SHA256SUMS`, `latest.json`, `BUILD-PROVENANCE.sigstore.json`, and `platform-signatures.json`
-
-`npm run test:release` passed against the public GitHub API. It checked the complete package matrix, every GitHub asset digest, every checksum, manifest entries, the portable Sigstore statement, live GitHub attestations, source repository, workflow, tag, commit, and platform-status agreement.
-
-The live one-line Linux installer was run in a new temporary home. It downloaded 76,675,576 bytes, checked the release metadata and checksum, and installed an executable static-pie AppImage. Observed SHA-256:
-
-```text
-96d0963d61dfae4a03f5f9efb9b1414bdfb2360845589e5fcaddbbf3c73add4b
-```
-
-Published trust status is honest: Linux provenance passed; Windows Authenticode and macOS signing/notarization are unavailable.
-
-## Clean quality gates
-
-A separate fresh clone of pushed `main` was used for the JavaScript checks.
-
-- `npm ci`: 193 packages, 0 vulnerabilities
-- `npm test`: 32/32 Playwright tests passed
-- Every one of the 18 claim tags passed, including the exact release-name regression
-- `npm run test:unit`: 7/7 Vitest tests passed
-- `npm run typecheck`: passed
-- `npm run lint`: passed
-- `npm audit --audit-level=high`: passed with 0 vulnerabilities
-- `npm run build`: passed and produced `dist/app` and `dist/site`
-- `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`: passed
-- Rust tests with default features: 2/2 passed
-- Rust tests with `--no-default-features`: 2/2 passed
-- `cargo check --manifest-path src-tauri/Cargo.toml`: passed
-- `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`: passed
-- A local Tauri build produced executable AppImage and Debian packages before release
-
-Production bundle sizes remain below budget: site JavaScript 22.68 KB raw / 8.06 KB gzip, site CSS 12.94 KB raw / 3.76 KB gzip, app JavaScript 11.65 KB raw / 4.75 KB gzip, and app CSS 9.98 KB raw / 3.13 KB gzip.
-
-## Live verification
-
-The static build was deployed through the work order's Azure Static Web Apps configuration. All 20 publicly served build files match the local `dist/site` files byte-for-byte. Azure consumes `staticwebapp.config.json` as deployment policy rather than serving it.
-
-- `npm run test:live:site`: passed routes, real 404, zero Axe violations, 390 px mobile, 200% text, keyboard focus, history focus/scroll, privacy request capture, demo reset/disposal, service-worker update, offline reload, release selection, checkout visibility, and license return.
-- `npm run test:live:billing`: passed one matching $24 product and the hosted Sociobot checkout redirect.
-- Factory `verify-url.sh`: HTTP 200 in 1,025 ms, correct title and language, one h1, one main landmark, no missing image alternatives, no unnamed buttons, and no console errors.
-- Live installer: passed and installed the v0.1.3 AppImage with the checksum above.
-- License response policy: 30 invalid checks returned the expected invalid response; request 31 returned 429 with `Retry-After: 3`.
-- Root, demo, privacy, terms, and 404 return HSTS, `nosniff`, strict-origin referrer policy, restricted permissions, and a response-header CSP with `frame-ancestors 'none'`.
-- HTML and the service worker revalidate after 30 seconds. Hashed JavaScript uses one-year immutable caching.
-
-Lighthouse 12.8.2 mobile results on the deployed root:
-
-| Category or metric | Result |
-| --- | ---: |
-| Performance | 100 |
-| Accessibility | 100 |
-| Best practices | 100 |
-| SEO | 100 |
-| First contentful paint | 0.98 s |
-| Largest contentful paint | 1.06 s |
-| Total blocking time | 43.5 ms |
-| Maximum potential input delay | 101 ms |
-| Cumulative layout shift | 0 |
-| Total transferred bytes | 107,260 |
-
-## Verify again
-
-```sh
-npm ci
-npm test
-npm run test:unit
-npm run typecheck
-npm run lint
-npm audit --audit-level=high
-npm run build
-cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
-cargo test --manifest-path src-tauri/Cargo.toml
-cargo check --manifest-path src-tauri/Cargo.toml
-cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
-npm run test:release
-npm run test:live:site
-npm run test:live:billing
-```
-
-## Needs operator action
-
-The repository and factory environment contain no owner code-signing certificates. Windows and macOS artifacts are published for operator inspection, but their product-site downloads remain closed instead of bypassing OS trust.
-
-To open those platform downloads, add the existing workflow secrets and republish a release:
-
-- `WINDOWS_CERT_PFX`, `WINDOWS_CERT_PASSWORD`
-- `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`
-- `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`
-
-No application, deployment, privacy, accessibility, Linux release, or Linux installation gap remains.
