@@ -71,6 +71,10 @@ case "$(uname -s)" in
       printf '%s\n' 'The macOS package origin is not verified. Nothing was installed.' >&2
       exit 1
     }
+    printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true' || {
+      printf '%s\n' 'A signed and notarized macOS package is not published yet. Nothing was downloaded.' >&2
+      exit 1
+    }
     ;;
 esac
 curl -fsSL "$asset_url" -o "$destination"
@@ -95,11 +99,7 @@ if [ "$(uname -s)" = "Linux" ]; then
 else
   final="$HOME/Downloads/$filename"
   mv "$destination" "$final"
-  if printf '%s' "$compact_status" | grep -q '"macOS":{[^}]*"codeSigned":true,"notarized":true'; then
-    spctl --assess --type open --context context:primary-signature --verbose "$final"
-    open "$final"
-    printf 'Verified and opened %s\n' "$final"
-  else
-    printf 'Verified and saved unsigned package at %s. Right-click it and choose Open.\n' "$final"
-  fi
+  spctl --assess --type open --context context:primary-signature --verbose "$final"
+  open "$final"
+  printf 'Verified and opened %s\n' "$final"
 fi

@@ -43,7 +43,7 @@ function footer() {
 function landing() {
   return `${header()}<main id="main" tabindex="-1">
     <section class="hero shell">
-      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">View downloads</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li>Three projects are free; unlimited projects cost $24 once.</li></ul></div>
+      <div class="hero-copy"><p class="eyebrow">A local desktop helper</p><h1>Mark the project before you edit.</h1><p class="lede">For dyslexic and ADHD developers who need distinct cues across similar project windows.</p><div class="actions"><a class="button" href="/demo" data-link>Try it with sample data</a><a class="button button-secondary" href="#download">View downloads</a><span class="action-note">The demo opens a completed sample. Nothing is saved.</span></div><ul class="plain-facts"><li>Project data stays on your device during normal use.</li><li>The demo reloads offline after its first visit.</li><li id="price-fact">Three projects are free; unlimited projects cost $24 once.</li></ul></div>
       <figure class="hero-art"><picture><source media="(max-width: 700px)" srcset="/assets/ceramic-beacons-mobile.webp"><img src="/assets/ceramic-beacons.webp" width="1180" height="787" fetchpriority="high" decoding="async" alt="Six distinct ceramic symbols sit beside layered window-like panes."></picture><span class="hero-seal" aria-hidden="true">◒</span><figcaption>Each project repeats one symbol, color, and name.</figcaption></figure>
     </section>
     <section class="preview-section shell" aria-labelledby="preview-title"><div class="section-intro"><h2 id="preview-title">Preview the confirmation strip</h2><p>The strip repeats the three beacon cues. You press the named button before editor settings change.</p></div>${productPreview()}</section>
@@ -79,7 +79,7 @@ function privacy() {
 }
 
 function terms() {
-  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and a source-verified package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
+  return `${header()}<main id="main" class="legal shell" tabindex="-1"><article><p class="eyebrow">Effective 29 August 2026</p><h1>Terms for using the app.</h1><p>You may use and modify the app under its MIT license. Keep backups of project settings before changing editor configuration.</p><h2>Free and licensed use</h2><p>The free app supports three saved projects. A valid license removes the three-project limit.</p><h2>Purchases</h2><p>The site shows a purchase link only when checkout is active and an installable package exists for your platform.</p><h2>No warranty</h2><p>The app is provided without warranty under the MIT license. You remain responsible for reviewing changes to project settings.</p><h2>Contact</h2><p>Email <a href="mailto:support@sociobot.in">support@sociobot.in</a> with purchase or license questions.</p></article></main>${footer()}`;
 }
 
 function notFound() {
@@ -268,12 +268,7 @@ async function setupDownloads(): Promise<Release | null> {
     button.href = asset.browser_download_url;
     button.removeAttribute('aria-disabled');
     button.textContent = `Download for ${platform === 'macOS' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-    const unsigned = platform === 'windows'
-      ? release.body?.includes('Windows Authenticode check: unavailable.')
-      : platform === 'macOS' ? release.body?.includes('macOS signing and notarization check: unavailable.') : false;
-    const operatingSystemTrust = unsigned
-      ? ' · unsigned; your system may show a warning'
-      : platform === 'windows' ? ' · Authenticode verified' : platform === 'macOS' ? ' · Apple signed and notarized' : '';
+    const operatingSystemTrust = platform === 'windows' ? ' · Authenticode verified' : platform === 'macOS' ? ' · Apple signed and notarized' : '';
     state.textContent = `${release.tag_name} · ${asset.name} · verified package origin${operatingSystemTrust}`;
     return release;
   } catch {
@@ -288,14 +283,25 @@ async function setupDownloads(): Promise<Release | null> {
 async function setupPurchaseOffer(hasInstallableRelease: boolean) {
   const offer = document.getElementById('purchase-offer');
   if (!offer) return;
+  let product;
+  try {
+    product = await registeredBillingProductForCurrentOrigin();
+    if (product) {
+      const price = displayPrice(product);
+      const priceFact = document.getElementById('price-fact');
+      if (priceFact) priceFact.textContent = `Three projects are free; unlimited projects cost ${price} once.`;
+    }
+  } catch {
+    product = null;
+  }
   if (!hasInstallableRelease) {
-    offer.textContent = 'License purchases open with a verified package for this platform. The free browser demo remains available.';
+    offer.textContent = 'License purchases open with an installable package for this platform. The free browser demo remains available.';
     return;
   }
   try {
-    const product = await registeredBillingProductForCurrentOrigin();
     if (!product) throw new Error('Checkout is not registered.');
-    offer.innerHTML = `<a class="button button-secondary" href="${esc(product.checkout_url)}">Buy a ${displayPrice(product)} license</a><span>${displayPrice(product)} one-time · unlimited projects</span>`;
+    const price = displayPrice(product);
+    offer.innerHTML = `<a class="button button-secondary" href="${esc(product.checkout_url)}">Buy a ${price} license</a><span>${price} one-time · unlimited projects</span>`;
   } catch {
     offer.textContent = 'License purchases are being prepared. The free app stores three projects.';
   }

@@ -1,6 +1,6 @@
 # Copy audit
 
-Checked 2026-08-30 for repair 10. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
+Checked 2026-09-01 for polish round 5. Hyphenated terms, paths, prices, and versions count as one word. No sentence exceeds 22 words. No user-facing sentence contains a banned marketing term.
 
 ## Landing page sentences
 
@@ -29,10 +29,10 @@ Checked 2026-08-30 for repair 10. Hyphenated terms, paths, prices, and versions 
 | 7 | pricing | A valid license removes the project limit. |
 | 8 | download state | A verified [platform] download is not published yet. |
 | 6 | download state | The free browser demo remains available. |
-| 12 | unsigned desktop state pattern | v0.1.6 · [package filename] · verified package origin · unsigned; your system may show a warning. |
+| 7 | trusted Linux state pattern | v0.1.6 · [package filename] · verified package origin. |
 | 10 | trusted Windows state pattern | v0.1.6 · [package filename] · verified package origin · Authenticode verified. |
 | 12 | trusted macOS state pattern | v0.1.6 · [package filename] · verified package origin · Apple signed and notarized. |
-| 10 | purchase state | License purchases open with a verified package for this platform. |
+| 10 | purchase state | License purchases open with an installable package for this platform. |
 | 4 | purchase detail | $24 one-time · unlimited projects. |
 | 5 | purchase state | License purchases are being prepared. |
 | 6 | purchase state | The free app stores three projects. |
@@ -75,7 +75,9 @@ Every prose sentence in `README.md` is 22 words or fewer. “Safe” is absent f
 
 The release status uses “verified package origin” for GitHub provenance. It reserves “signed” and “notarized” for operating-system trust checks.
 
-The README states that every platform needs a complete release with verified GitHub provenance. It explains operating-system warnings when owner certificates are unavailable.
+The README states that every platform needs a complete release with verified GitHub provenance. It states the additional Windows and macOS trust checks. It also states that unsigned Windows and macOS packages and their purchase links stay unavailable.
+
+The first-screen and purchase prices come from the active catalogue when it loads. The registered live product is $24 once.
 
 The README uses “browser-accessible API” instead of browser-security jargon. It directs license holders to the desktop app and makes no website restoration promise.
 
@@ -92,4 +94,4 @@ The README uses “browser-accessible API” instead of browser-security jargon.
 | Configuration written into an editor folder | editor settings |
 | GitHub record of package origin | GitHub provenance file |
 
-Catalog description: “Mark every project with a color, name, and symbol before you edit.” (12 words, 66 characters without the newline.)
+Catalog description: “Mark a project with a color, name, and symbol before you edit.” (12 words, 62 characters without the newline.)

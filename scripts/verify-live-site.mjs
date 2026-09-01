@@ -160,18 +160,18 @@ try {
   await billingContext.close();
 
   for (const fixture of [
-    { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows', packagePattern: /(?:\.msi|-setup\.exe)$/ },
-    { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS', packagePattern: /\.dmg$/ }
+    { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', label: 'Windows' },
+    { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6)', label: 'macOS' }
   ]) {
     const platformContext = await browser.newContext({ userAgent: fixture.userAgent });
     const platformPage = await platformContext.newPage();
     await platformPage.goto(`${origin}/`, { waitUntil: 'networkidle' });
     const platformDownload = platformPage.locator('#download-button');
-    assert.match(await platformDownload.getAttribute('href') ?? '', fixture.packagePattern, `${fixture.label} must link its published package`);
-    assert.equal(await platformDownload.getAttribute('aria-disabled'), null);
-    assert.equal(await platformPage.getByRole('link', { name: 'Buy a $24 license' }).count(), 1);
-    assert.match(await platformPage.locator('#download-state').innerText(), /verified package origin/);
-    assert.match(await platformPage.locator('#download-state').innerText(), /unsigned; your system may show a warning/);
+    assert.equal(await platformDownload.getAttribute('href'), null, `${fixture.label} must withhold its unsigned package`);
+    assert.equal(await platformDownload.getAttribute('aria-disabled'), 'true');
+    assert.equal(await platformPage.getByRole('link', { name: 'Buy a $24 license' }).count(), 0);
+    assert.match(await platformPage.locator('#download-state').innerText(), new RegExp(`verified ${fixture.label} download is not published`, 'i'));
+    assert.match(await platformPage.locator('#purchase-offer').innerText(), /License purchases open with an installable package/);
     await platformContext.close();
   }
 
@@ -195,7 +195,7 @@ try {
   assert.equal(websiteVerificationRequests, 0);
   await returnContext.close();
 
-  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, demo disposal, offline update, all-platform downloads, and desktop license guidance.');
+  console.log('Live site passed: routes, Axe, mobile, keyboard, history, privacy, offline, Linux download, signed-platform gates, and license guidance.');
 } finally {
   await browser.close();
 }
