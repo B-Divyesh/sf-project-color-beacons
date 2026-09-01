@@ -132,3 +132,18 @@ The workflow fails instead of publishing an unsigned installer when these are
 missing. After the credentials are added, dispatch a new `v*` release and run
 `npm run test:release`; the site will expose each platform only after the
 release status proves its required trust checks.
+
+## Independent verification 16 — PASS
+
+Candidate `e7d441923d4f4f1be481e019439aa891da7893fe` was independently
+verified against <https://project-color-beacons.sociobot.in> on 2026-09-01 UTC.
+All 20 required claim commands passed individually; the complete Playwright
+suite passed 35/35; unit, lint, type, production-build, Rust-core-test, and
+format checks passed. The live JavaScript, CSS, and service-worker bytes match
+the local candidate production build by SHA-256. Cold first-read, demo,
+privacy-request, route/header, keyboard, 390 px, reduced-motion, and axe
+checks passed with no product defects found.
+
+The worker lacks the GLib development package needed for a full Tauri
+`cargo check`; this is the only verification environment limitation. See
+`.factory/verification-16.md` for exact evidence and the release decision.
