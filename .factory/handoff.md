@@ -1,40 +1,29 @@
-# Project Color Beacons — verification 15 handoff
+# Project Color Beacons — review 5 handoff
 
-## Outcome: PASS
+## Outcome: FAIL
 
-Candidate `5e77643d0af43ddcb7ca72b10689f9aa2da6aebd` passed independent local
-and deployed verification on 2026-09-01. The live site at
-<https://project-color-beacons.sociobot.in> matches the candidate's generated
-site bytes exactly. No product code was changed during verification.
+This review changed documentation only. No product code, configuration, or
+deployment resource was modified.
 
-## How to verify
+## Verification completed
 
-```sh
-npm ci
-npm test
-npm run test:unit
-npm run lint
-npm run typecheck
-npm run build
-cargo fmt --manifest-path src-tauri/Cargo.toml --check
-cargo test --manifest-path src-tauri/Cargo.toml --no-default-features
-```
+- Reviewed the live landing page in fresh 390 x 844 and 1440 x 900 contexts.
+- Checked the direct `/demo` workspace, its initial sample, reset behaviour,
+  demo storage namespace, and same-origin request log.
+- Checked internal routes, metadata, 404 status, responsive first screen,
+  route accessibility, and the product visual system.
+- In a fresh clone, ran every one of the 19 exact `.factory/claims.json`
+  commands separately; all passed. The full Playwright suite passed 34/34,
+  Vitest passed 7/7, and build, typecheck, and lint completed successfully.
 
-Open `/demo` for the separate sample workspace. It starts with Atlas API
-confirmed; check a named project, confirm it, and reset the demo to return to
-the initial sample.
+## Remaining findings
 
-## Evidence and remaining work
+- **F-4-1 BLOCKING:** current code deliberately exposes unsigned Windows and
+  macOS packages with warnings. This regresses the earlier requirement to
+  withhold those packages and related purchase access until OS signing is
+  verified.
+- **F-5-1 HIGH:** the first-screen `$24 once` price is not an exact registered
+  claim, even though a fixture-based checkout test happens to use that price.
 
-- All 19 declared claim commands passed individually; the full Playwright suite
-  passed 34/34 and Vitest passed 7/7.
-- The production build emitted `dist/app` and `dist/site`; initial site JS is
-  8,199 bytes gzip and CSS is 3,840 bytes gzip.
-- Live desktop and 390 px mobile QA, keyboard/focus, reduced motion, offline
-  demo reload, privacy request logging, response headers, cache policy, and
-  serious/critical Axe checks passed.
-- Linux, Windows, and macOS each display a working source-verified package link.
-  Windows and macOS warn plainly when operating-system signing is unavailable.
-
-No release-blocking defects or known functional gaps were found. Full evidence
-is in `.factory/verification-15.md`.
+Full evidence, copy inventory, history check, and concrete fixes are in
+`.factory/review-5.md`.
