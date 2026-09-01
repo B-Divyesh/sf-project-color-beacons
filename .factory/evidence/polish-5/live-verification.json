@@ -1,0 +1,65 @@
+{
+  "verifiedAt": "2026-09-01T19:52:44.324Z",
+  "candidateCommit": "d04670b867dee25966362e6e65844c1a3e8a9e2a",
+  "deploymentId": "a4ff42f5-ace8-4efd-bb2c-16b607076b19",
+  "liveUrl": "https://project-color-beacons.sociobot.in",
+  "routes": {
+    "/": 200,
+    "/demo": 200,
+    "/privacy": 200,
+    "/terms": 200,
+    "/404.html": 200,
+    "/polish-5-not-found": 404
+  },
+  "verifyUrl": {
+    "loadMs": 807,
+    "consoleErrors": 0,
+    "titlePresent": true,
+    "lang": "en",
+    "h1PerRoute": 1,
+    "mainPerRoute": true,
+    "imagesMissingAlt": 0,
+    "buttonsMissingNames": 0
+  },
+  "axe": {
+    "homeSeriousCritical": 0,
+    "demoSeriousCritical": 0
+  },
+  "demoQueryPath": {
+    "url": "/?demo=1",
+    "bannerVisible": true,
+    "atlasVisible": true,
+    "sampleProjects": 3,
+    "storageKeys": ["demo:pcb:site-state"],
+    "requestOrigins": ["https://project-color-beacons.sociobot.in"]
+  },
+  "price": {
+    "landingFact": "Three projects are free; unlimited projects cost $24 once.",
+    "registeredPriceMinor": 2400,
+    "currency": "USD",
+    "matchingProducts": 1,
+    "hostedCheckoutRedirect": true
+  },
+  "releaseV0.1.6": {
+    "linux": "installable; source provenance verified",
+    "windows": "withheld; Authenticode verification is absent",
+    "macOS": "withheld; Apple signing and notarization are absent"
+  },
+  "lighthouseMobile": {
+    "performance": 100,
+    "accessibility": 100,
+    "bestPractices": 100,
+    "seo": 100,
+    "firstContentfulPaint": "0.8 s",
+    "largestContentfulPaint": "1.7 s",
+    "totalBlockingTime": "50 ms",
+    "cumulativeLayoutShift": 0,
+    "speedIndex": "0.8 s",
+    "transferSize": "95 KiB"
+  },
+  "deployedJavaScript": {
+    "path": "assets/index-CFLiWOpf.js",
+    "sha256": "6837f555dd169951c8e31b995a41e7c355cf27b436cca95eaec33ecafe453111",
+    "matchesLocalBuild": true
+  }
+}
